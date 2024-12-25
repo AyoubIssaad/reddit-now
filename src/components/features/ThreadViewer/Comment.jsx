@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Card } from "../../ui/Card";
-import { MessageSquare, ChevronDown, ChevronRight } from "lucide-react";
+import { Card } from "@/components/ui/Card";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -8,13 +8,12 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
   const { author, content, score, created, replies, isNew } = comment;
   const [isExpanded, setIsExpanded] = useState(expandByDefault);
 
-  // Update expansion state when the default setting changes
   useEffect(() => {
     setIsExpanded(expandByDefault);
   }, [expandByDefault]);
 
   const hasReplies = replies && replies.length > 0;
-  const maxDepth = 5; // Maximum nesting level
+  const maxDepth = 5;
 
   const formatTimeAgo = (timestamp) => {
     const seconds = Math.floor(
@@ -50,38 +49,35 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
           isNew ? "animate-fade-in border-l-4 border-l-blue-500" : ""
         }`}
       >
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-              u/{author}
+        <div className="flex flex-col">
+          {/* Comment header */}
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <span className="font-semibold text-gray-900 dark:text-gray-100 hover:underline">
+              {author}
             </span>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {formatTimeAgo(created)}
-            </span>
+            <span>{score === 1 ? "1 point" : `${score} points`}</span>
+            <span>{formatTimeAgo(created)}</span>
           </div>
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 shrink-0">
-            {hasReplies && (
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center gap-1 text-sm hover:text-gray-700 dark:hover:text-gray-300"
-              >
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-                {replies.length} {replies.length === 1 ? "reply" : "replies"}
-              </button>
-            )}
-            <div className="flex items-center gap-1">
-              <MessageSquare className="h-4 w-4" />
-              <span className="text-sm">{score}</span>
-            </div>
-          </div>
-        </div>
 
-        <div className="prose prose-sm dark:prose-invert max-w-none break-words">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          {/* Comment content */}
+          <div className="mt-1 prose prose-sm dark:prose-invert max-w-none break-words">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          </div>
+
+          {/* Replies section */}
+          {hasReplies && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="mt-2 flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
+              {replies.length} {replies.length === 1 ? "reply" : "replies"}
+            </button>
+          )}
         </div>
       </Card>
 

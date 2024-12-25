@@ -20,7 +20,7 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             <ThemeToggle />
             <a
-              href="https://github.com/yourusername/reddit-now"
+              href="https://github.com/ayoubissaad/reddit-now"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors"
