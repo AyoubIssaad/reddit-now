@@ -16,6 +16,10 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter var", "system-ui", "sans-serif"],
+        display: ["Cal Sans", "Inter var", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -49,6 +53,99 @@ module.exports = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: "65ch",
+            color: "var(--tw-prose-body)",
+            lineHeight: "1.75",
+            a: {
+              color: "var(--tw-prose-links)",
+              textDecoration: "underline",
+              fontWeight: "500",
+            },
+            "a:hover": {
+              color: "var(--tw-prose-links-hover)",
+            },
+            strong: {
+              color: "var(--tw-prose-bold)",
+              fontWeight: "600",
+            },
+            "ol > li::marker": {
+              fontWeight: "400",
+              color: "var(--tw-prose-counters)",
+            },
+            "ul > li::marker": {
+              color: "var(--tw-prose-bullets)",
+            },
+            hr: {
+              borderColor: "var(--tw-prose-hr)",
+              marginTop: "3em",
+              marginBottom: "3em",
+            },
+            blockquote: {
+              fontWeight: "500",
+              fontStyle: "italic",
+              color: "var(--tw-prose-quotes)",
+              borderLeftWidth: "0.25rem",
+              borderLeftColor: "var(--tw-prose-quote-borders)",
+              marginTop: "1.6em",
+              marginBottom: "1.6em",
+              paddingLeft: "1em",
+            },
+            h1: {
+              color: "var(--tw-prose-headings)",
+              fontWeight: "800",
+              fontSize: "2.25em",
+              marginTop: "0",
+              marginBottom: "0.8888889em",
+              lineHeight: "1.1111111",
+            },
+            h2: {
+              color: "var(--tw-prose-headings)",
+              fontWeight: "700",
+              fontSize: "1.5em",
+              marginTop: "2em",
+              marginBottom: "1em",
+              lineHeight: "1.3333333",
+            },
+            h3: {
+              color: "var(--tw-prose-headings)",
+              fontWeight: "600",
+              fontSize: "1.25em",
+              marginTop: "1.6em",
+              marginBottom: "0.6em",
+              lineHeight: "1.6",
+            },
+            code: {
+              color: "var(--tw-prose-code)",
+              fontWeight: "600",
+              fontSize: "0.875em",
+            },
+            "code::before": {
+              content: '"`"',
+            },
+            "code::after": {
+              content: '"`"',
+            },
+            pre: {
+              color: "var(--tw-prose-pre-code)",
+              backgroundColor: "var(--tw-prose-pre-bg)",
+              overflowX: "auto",
+              fontWeight: "400",
+              fontSize: "0.875em",
+              lineHeight: "1.7142857",
+              marginTop: "1.7142857em",
+              marginBottom: "1.7142857em",
+              borderRadius: "0.375rem",
+              paddingTop: "0.8571429em",
+              paddingRight: "1.1428571em",
+              paddingBottom: "0.8571429em",
+              paddingLeft: "1.1428571em",
+            },
+          },
         },
       },
       borderRadius: {

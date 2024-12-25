@@ -15,7 +15,7 @@ const UpdateFrequencySelect = ({ value, onChange, disabled }) => {
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         disabled={disabled}
-        className="h-9 rounded-md border border-input bg-background pl-8 pr-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+        className="h-10 rounded-lg border border-input bg-background pl-9 pr-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
       >
         {FREQUENCY_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
@@ -23,7 +23,7 @@ const UpdateFrequencySelect = ({ value, onChange, disabled }) => {
           </option>
         ))}
       </select>
-      <Clock className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
+      <Clock className="absolute left-3 h-4 w-4 text-muted-foreground" />
     </div>
   );
 };

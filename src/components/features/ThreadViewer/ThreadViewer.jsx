@@ -81,16 +81,19 @@ const ThreadViewer = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Input and Controls Section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Input
-          type="text"
-          placeholder="Paste Reddit thread URL"
-          value={url}
-          onChange={handleUrlChange}
-          className="flex-grow bg-background"
-        />
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div className="flex-grow">
+          <Input
+            type="text"
+            placeholder="Paste Reddit thread URL"
+            value={url}
+            onChange={handleUrlChange}
+            className="h-11 w-full rounded-lg border-muted bg-background/50 px-4 text-base shadow-none transition-colors hover:border-muted-foreground/25 focus:border-primary"
+          />
+        </div>
+        <div className="flex items-center gap-3">
           <UpdateFrequencySelect
             value={updateFrequency}
             onChange={setUpdateFrequency}
@@ -100,42 +103,50 @@ const ThreadViewer = ({
             onClick={handleToggleWatch}
             variant={isWatching ? "destructive" : "default"}
             disabled={isLoading || !url}
+            className="h-11 px-6 font-medium"
           >
             {isWatching ? "Stop" : "Start"} Watching
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <label className="flex items-center gap-2 cursor-pointer">
+      {/* Settings and Status Section */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+        <label className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
           <input
             type="checkbox"
             checked={expandRepliesByDefault}
             onChange={handleToggleExpand}
-            className="rounded border-gray-300 focus:ring-blue-500"
+            className="rounded border-input h-4 w-4 focus:ring-primary"
           />
           <span>Expand replies by default</span>
         </label>
+
+        {lastFetch && (
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            <span>
+              Last updated: {new Date(lastFetch).toLocaleTimeString()}
+            </span>
+          </div>
+        )}
       </div>
 
+      {/* Error Alert */}
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="animate-fade-in">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      {lastFetch && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          Last updated: {new Date(lastFetch).toLocaleTimeString()}
-        </div>
-      )}
-
-      <CommentList
-        comments={comments}
-        expandByDefault={expandRepliesByDefault}
-      />
+      {/* Comments Section */}
+      <div className="mt-8">
+        <CommentList
+          comments={comments}
+          expandByDefault={expandRepliesByDefault}
+        />
+      </div>
     </div>
   );
 };

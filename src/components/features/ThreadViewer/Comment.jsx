@@ -38,30 +38,29 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
   };
 
   return (
-    <div className={`relative ${depth > 0 ? "ml-4 mt-2" : "mt-3"}`}>
-      {depth > 0 && (
-        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-400 dark:bg-gray-600 -ml-2" />
-      )}
+    <div className={`relative ${depth > 0 ? "ml-6 mt-3" : "mt-4"}`}>
+      {depth > 0 && <div className="comment-thread-line -ml-3" />}
 
       <div
-        className={`border bg-card text-card-foreground shadow rounded-r-xl rounded-l-none p-4 transition-all duration-500 overflow-hidden ${
-          isNew
-            ? "animate-fade-in border-l-4 border-l-gray-600 dark:border-l-gray-400"
-            : ""
+        className={`comment-card ${
+          isNew ? "animate-fade-in border-l-4 border-l-primary" : ""
         }`}
       >
         <div className="flex flex-col">
           {/* Comment header */}
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-            <span className="font-semibold text-gray-900 dark:text-gray-100 hover:underline">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="font-medium text-foreground hover:underline">
               {author}
             </span>
-            <span>{score === 1 ? "1 point" : `${score} points`}</span>
-            <span>{formatTimeAgo(created)}</span>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{score === 1 ? "1 point" : `${score} points`}</span>
+              <span>•</span>
+              <span>{formatTimeAgo(created)}</span>
+            </div>
           </div>
 
           {/* Comment content */}
-          <div className="mt-1 prose prose-sm dark:prose-invert max-w-none break-words">
+          <div className="mt-2 prose prose-sm dark:prose-invert max-w-none break-words">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
           </div>
 
@@ -69,12 +68,12 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
           {hasReplies && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="mt-2 flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {isExpanded ? (
-                <ChevronDown className="h-3 w-3" />
+                <ChevronDown className="h-4 w-4" />
               ) : (
-                <ChevronRight className="h-3 w-3" />
+                <ChevronRight className="h-4 w-4" />
               )}
               {replies.length} {replies.length === 1 ? "reply" : "replies"}
             </button>
@@ -83,7 +82,7 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
       </div>
 
       {hasReplies && isExpanded && depth < maxDepth && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {replies.map((reply) => (
             <Comment
               key={reply.id}
