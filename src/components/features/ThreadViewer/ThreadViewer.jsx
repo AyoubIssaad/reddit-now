@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Input } from "../../ui/Input";
-import { Button } from "../../ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { AlertCircle, Clock } from "lucide-react";
-import { Alert, AlertDescription } from "../../ui/Alert";
+import { Alert, AlertDescription } from "@/components/ui/Alert";
 import CommentList from "./CommentList";
-import { useRedditThread } from "../../../hooks/useRedditThread";
+import { useRedditThread } from "@/hooks/useRedditThread";
 import UpdateFrequencySelect from "./UpdateFrequencySelect";
 
 const normalizeRedditUrl = (url) => {
@@ -26,7 +26,11 @@ const normalizeRedditUrl = (url) => {
   }
 };
 
-const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
+const ThreadViewer = ({
+  initialUrl = "",
+  autoStart = false,
+  hideHeader = false,
+}) => {
   const [url, setUrl] = useState(normalizeRedditUrl(initialUrl));
   const [isWatching, setIsWatching] = useState(autoStart);
   const [updateFrequency, setUpdateFrequency] = useState(30000);
@@ -64,6 +68,9 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
   }, [autoStart, url]);
 
   const handleToggleWatch = () => {
+    if (!isWatching) {
+      fetchComments(); // Fetch immediately when starting
+    }
     setIsWatching(!isWatching);
   };
 
@@ -74,14 +81,7 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
   };
 
   return (
-    <div className="space-y-4 py-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-bold text-foreground">Thread Viewer</h2>
-        <p className="text-sm text-muted-foreground">
-          Paste a Reddit thread URL to start watching the comments in real-time
-        </p>
-      </div>
-
+    <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <Input
           type="text"

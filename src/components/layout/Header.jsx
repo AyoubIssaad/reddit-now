@@ -12,7 +12,7 @@ const Header = () => {
             <Link to="/" className="flex items-center space-x-2">
               <h1 className="text-xl font-bold text-foreground">Reddit-Now</h1>
               <span className="text-sm text-muted-foreground">
-                Live Thread Viewer
+                Live Reddit Experience
               </span>
             </Link>
           </div>

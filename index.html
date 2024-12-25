@@ -2,12 +2,138 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+
+    <!-- Primary Meta Tags -->
+    <title>Reddit-Now - Watch Reddit Threads Live</title>
+    <meta name="title" content="Reddit-Now - Watch Reddit Threads Live" />
+    <meta
+      name="description"
+      content="Follow Reddit discussions in real-time without refreshing. Just paste a thread URL and start watching the conversation unfold live."
+    />
+    <meta
+      name="keywords"
+      content="reddit, live thread, reddit viewer, real-time comments, reddit discussion"
+    />
+
+    <!-- Favicon and App Icons -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/favicon-192x192.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="512x512"
+      href="/favicon-512x512.png"
+    />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/icon.svg" color="#0f172a" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="msapplication-TileColor" content="#0f172a" />
+    <meta name="msapplication-icon" content="/favicon-192x192.png" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://reddit-now.com/" />
+    <meta
+      property="og:title"
+      content="Reddit-Now - Watch Reddit Threads Live"
+    />
+    <meta
+      property="og:description"
+      content="Follow Reddit discussions in real-time without refreshing. Just paste a thread URL and start watching the conversation unfold live."
+    />
+    <meta property="og:image" content="https://reddit-now.com/og-image.jpg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://reddit-now.com/" />
+    <meta
+      property="twitter:title"
+      content="Reddit-Now - Watch Reddit Threads Live"
+    />
+    <meta
+      property="twitter:description"
+      content="Follow Reddit discussions in real-time without refreshing. Just paste a thread URL and start watching the conversation unfold live."
+    />
+    <meta
+      property="twitter:image"
+      content="https://reddit-now.com/og-image.jpg"
+    />
+
+    <!-- SEO -->
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <link rel="canonical" href="https://reddit-now.com/" />
+
+    <!-- PWA -->
+    <meta name="application-name" content="Reddit-Now" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Reddit-Now" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="theme-color"
+      content="#ffffff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0f172a"
+      media="(prefers-color-scheme: dark)"
+    />
+
+    <!-- Performance -->
+    <link rel="preconnect" href="https://www.reddit.com" />
+    <link rel="dns-prefetch" href="https://www.reddit.com" />
+
+    <!-- Preload critical assets -->
+    <link rel="preload" href="/src/main.jsx" as="script" type="module" />
+    <link rel="preload" href="/src/styles/globals.css" as="style" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Reddit-Now",
+        "url": "https://reddit-now.com",
+        "applicationCategory": "Social Media Tool",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "A real-time Reddit thread viewer that allows you to follow discussions without refreshing. Just paste a thread URL and start watching comments update live.",
+        "browserRequirements": "Requires JavaScript. Requires HTML5.",
+        "permissions": "no special permissions required",
+        "softwareVersion": "1.0.0"
+      }
+    </script>
   </head>
   <body>
+    <noscript>
+      <div style="padding: 20px; text-align: center">
+        JavaScript is required to run Reddit-Now. Please enable JavaScript to
+        continue.
+      </div>
+    </noscript>
+
     <div id="root"></div>
+
+    <!-- Main entry point -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
