@@ -28,7 +28,7 @@ const RedditNowRoute = () => {
   const path = location.pathname;
 
   // Remove the -now suffix and extract the Reddit URL
-  const redditPath = path.replace(/-now\/?$/, "");
+  const redditPath = path.replace(/-now(\/.*)?$/, "");
   const redditUrl = `https://reddit.com${redditPath}`;
 
   return (
@@ -59,18 +59,11 @@ function App() {
           />
 
           {/* Handle paths with -now suffix */}
-          <Route
-            path="/r/:subreddit/comments/:id-now"
-            element={<RedditNowRoute />}
-          />
-          <Route
-            path="/r/:subreddit/comments/:id-now/*"
-            element={<RedditNowRoute />}
-          />
+          <Route path="/*-now*" element={<RedditNowRoute />} />
 
           {/* Handle old reddit URLs */}
-          <Route path="/www.reddit.com/*-now" element={<RedditNowRoute />} />
-          <Route path="/reddit.com/*-now" element={<RedditNowRoute />} />
+          <Route path="/www.reddit.com/*" element={<RedditNowRoute />} />
+          <Route path="/reddit.com/*" element={<RedditNowRoute />} />
         </Routes>
       </div>
     </BrowserRouter>
