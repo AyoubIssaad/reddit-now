@@ -17,7 +17,11 @@ const Home = () => (
     />
     <div className="space-y-4 py-6">
       <div>
-        <h2 className="text-xl font-bold text-foreground mb-3">
+        <h2 className="text-xl font-bold text-foreground mb-3 flex items-center gap-2">
+          <div className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </div>
           Live Reddit Experience
         </h2>
         <p className="text-sm text-muted-foreground mb-4">

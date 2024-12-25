@@ -10,6 +10,11 @@ const Header = () => {
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link to="/" className="flex items-center space-x-2">
+              <img
+                src="/live-black-256.png"
+                alt="Reddit-Now Logo"
+                className="h-6 w-6 dark:invert"
+              />
               <h1 className="text-xl font-bold text-foreground">Reddit-Now</h1>
               <span className="text-sm text-muted-foreground">
                 Live Reddit Experience

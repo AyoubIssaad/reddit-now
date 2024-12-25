@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Card } from "@/components/ui/Card";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -41,12 +40,14 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
   return (
     <div className={`relative ${depth > 0 ? "ml-4 mt-2" : "mt-3"}`}>
       {depth > 0 && (
-        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -ml-2" />
+        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-400 dark:bg-gray-600 -ml-2" />
       )}
 
-      <Card
-        className={`p-4 transition-all duration-500 overflow-hidden ${
-          isNew ? "animate-fade-in border-l-4 border-l-blue-500" : ""
+      <div
+        className={`border bg-card text-card-foreground shadow rounded-r-xl rounded-l-none p-4 transition-all duration-500 overflow-hidden ${
+          isNew
+            ? "animate-fade-in border-l-4 border-l-gray-600 dark:border-l-gray-400"
+            : ""
         }`}
       >
         <div className="flex flex-col">
@@ -79,7 +80,7 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
             </button>
           )}
         </div>
-      </Card>
+      </div>
 
       {hasReplies && isExpanded && depth < maxDepth && (
         <div className="space-y-2">

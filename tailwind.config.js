@@ -67,14 +67,20 @@ module.exports = {
             transform: "translateY(0)",
           },
         },
+        "pulse-recording": {
+          "0%, 100%": {
+            opacity: "1",
+          },
+          "50%": {
+            opacity: "0.4",
+          },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.5s ease-out",
+        "pulse-recording": "pulse-recording 2s ease-in-out infinite",
       },
     },
   },
-  plugins: [
-    require("tailwindcss-animate"),
-    require("@tailwindcss/typography"), // Add this line
-  ],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 };
