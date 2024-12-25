@@ -7,25 +7,47 @@ import CommentList from "./CommentList";
 import { useRedditThread } from "../../../hooks/useRedditThread";
 import UpdateFrequencySelect from "./UpdateFrequencySelect";
 
+const normalizeRedditUrl = (url) => {
+  if (!url) return "";
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.hostname === "reddit.com") {
+      return url.replace("reddit.com", "www.reddit.com");
+    }
+    if (
+      urlObj.hostname === "localhost" ||
+      urlObj.hostname.includes("reddit-now.com")
+    ) {
+      return `https://www.reddit.com${urlObj.pathname}${urlObj.search}`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+};
+
 const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
-  const [url, setUrl] = useState(initialUrl);
+  const [url, setUrl] = useState(normalizeRedditUrl(initialUrl));
   const [isWatching, setIsWatching] = useState(autoStart);
-  const [updateFrequency, setUpdateFrequency] = useState(30000); // Default to 30 seconds
+  const [updateFrequency, setUpdateFrequency] = useState(30000);
   const [expandRepliesByDefault, setExpandRepliesByDefault] = useState(
     localStorage.getItem("expand-replies") === "true",
   );
 
-  // Update URL when initialUrl prop changes
   useEffect(() => {
     if (initialUrl) {
-      setUrl(initialUrl);
+      setUrl(normalizeRedditUrl(initialUrl));
     }
   }, [initialUrl]);
+
+  const handleUrlChange = (e) => {
+    const newUrl = normalizeRedditUrl(e.target.value);
+    setUrl(newUrl);
+  };
 
   const { comments, error, isLoading, lastFetch, fetchComments } =
     useRedditThread(url);
 
-  // Set up polling when watching is enabled
   useEffect(() => {
     let interval;
     if (isWatching && url) {
@@ -35,7 +57,6 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
     return () => clearInterval(interval);
   }, [isWatching, updateFrequency, fetchComments, url]);
 
-  // Start watching automatically if autoStart is true
   useEffect(() => {
     if (autoStart && url && !isWatching) {
       setIsWatching(true);
@@ -66,7 +87,7 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
           type="text"
           placeholder="Paste Reddit thread URL"
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={handleUrlChange}
           className="flex-grow bg-background"
         />
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">

@@ -16,7 +16,7 @@ const parseComments = (children) => {
           )
         : [],
     }))
-    .sort((a, b) => b.created - a.created); // Sort by newest first within each level
+    .sort((a, b) => b.created - a.created);
 };
 
 export const useRedditThread = (url) => {
@@ -26,7 +26,7 @@ export const useRedditThread = (url) => {
   const [lastFetch, setLastFetch] = useState(null);
 
   const fetchComments = useCallback(async () => {
-    if (!url || !isValidRedditUrl(url)) {
+    if (!url) {
       setError("Please enter a valid Reddit thread URL");
       return;
     }
@@ -35,36 +35,44 @@ export const useRedditThread = (url) => {
       setIsLoading(true);
       setError("");
 
+      // Extract thread info from URL
       const jsonUrl = convertToJsonUrl(url);
-      const response = await fetch(jsonUrl);
+
+      const response = await fetch(jsonUrl, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch comments");
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+
+      // Verify we have the comments array
+      if (!data[1]?.data?.children) {
+        throw new Error("Invalid response format from Reddit");
+      }
+
       const newComments = parseComments(
         data[1].data.children.filter((c) => c.kind === "t1"),
       );
 
       setComments((prevComments) => {
-        // Create a map of existing comments for efficient lookup
         const existingCommentMap = new Map(
           prevComments.map((comment) => [comment.id, comment]),
         );
 
-        // Filter out comments we already have and mark new ones
         const uniqueNewComments = newComments.filter((comment) => {
           const exists = existingCommentMap.has(comment.id);
           if (!exists) {
             return true;
           }
-          // Update the isNew flag for existing comments
           comment.isNew = false;
           return false;
         });
 
-        // Combine new and existing comments, sort by creation time
         const allComments = [...uniqueNewComments, ...prevComments].sort(
           (a, b) => b.created - a.created,
         );
@@ -74,7 +82,8 @@ export const useRedditThread = (url) => {
 
       setLastFetch(new Date());
     } catch (err) {
-      setError("Error fetching comments. Please check the URL and try again.");
+      console.error("Fetch error:", err);
+      setError(`Error fetching comments. ${err.message}`);
     } finally {
       setIsLoading(false);
     }
