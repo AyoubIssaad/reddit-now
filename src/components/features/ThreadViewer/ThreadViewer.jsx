@@ -1,32 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "../../ui/Input";
 import { Button } from "../../ui/Button";
-import { AlertCircle, Clock, ChevronDown } from "lucide-react";
+import { AlertCircle, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "../../ui/Alert";
 import CommentList from "./CommentList";
 import { useRedditThread } from "../../../hooks/useRedditThread";
 import UpdateFrequencySelect from "./UpdateFrequencySelect";
 
-const ThreadViewer = () => {
-  const [url, setUrl] = useState("");
-  const [isWatching, setIsWatching] = useState(false);
+const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
+  const [url, setUrl] = useState(initialUrl);
+  const [isWatching, setIsWatching] = useState(autoStart);
   const [updateFrequency, setUpdateFrequency] = useState(30000); // Default to 30 seconds
   const [expandRepliesByDefault, setExpandRepliesByDefault] = useState(
     localStorage.getItem("expand-replies") === "true",
   );
 
+  // Update URL when initialUrl prop changes
+  useEffect(() => {
+    if (initialUrl) {
+      setUrl(initialUrl);
+    }
+  }, [initialUrl]);
+
   const { comments, error, isLoading, lastFetch, fetchComments } =
     useRedditThread(url);
 
   // Set up polling when watching is enabled
-  React.useEffect(() => {
+  useEffect(() => {
     let interval;
-    if (isWatching) {
+    if (isWatching && url) {
       fetchComments();
       interval = setInterval(fetchComments, updateFrequency);
     }
     return () => clearInterval(interval);
-  }, [isWatching, updateFrequency, fetchComments]);
+  }, [isWatching, updateFrequency, fetchComments, url]);
+
+  // Start watching automatically if autoStart is true
+  useEffect(() => {
+    if (autoStart && url && !isWatching) {
+      setIsWatching(true);
+    }
+  }, [autoStart, url]);
 
   const handleToggleWatch = () => {
     setIsWatching(!isWatching);

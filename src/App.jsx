@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
   useParams,
 } from "react-router-dom";
 import Header from "./components/layout/Header";
@@ -14,6 +15,22 @@ import ThreadViewer from "./components/features/ThreadViewer/ThreadViewer";
 const RedditRoute = () => {
   const { subreddit, id } = useParams();
   const redditUrl = `https://reddit.com/r/${subreddit}/comments/${id}`;
+  return (
+    <Container>
+      <ThreadViewer initialUrl={redditUrl} autoStart={true} />
+    </Container>
+  );
+};
+
+// Handle URLs with -now suffix
+const RedditNowRoute = () => {
+  const location = useLocation();
+  const path = location.pathname;
+
+  // Remove the -now suffix and extract the Reddit URL
+  const redditPath = path.replace(/-now\/?$/, "");
+  const redditUrl = `https://reddit.com${redditPath}`;
+
   return (
     <Container>
       <ThreadViewer initialUrl={redditUrl} autoStart={true} />
@@ -35,23 +52,25 @@ function App() {
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
+          {/* Handle direct Reddit paths */}
           <Route
             path="/r/:subreddit/comments/:id/*"
             element={<RedditRoute />}
           />
+
+          {/* Handle paths with -now suffix */}
+          <Route
+            path="/r/:subreddit/comments/:id-now"
+            element={<RedditNowRoute />}
+          />
+          <Route
+            path="/r/:subreddit/comments/:id-now/*"
+            element={<RedditNowRoute />}
+          />
+
           {/* Handle old reddit URLs */}
-          <Route
-            path="/www.reddit.com/*"
-            element={
-              <Navigate to={`/${window.location.pathname.slice(15)}`} replace />
-            }
-          />
-          <Route
-            path="/reddit.com/*"
-            element={
-              <Navigate to={`/${window.location.pathname.slice(11)}`} replace />
-            }
-          />
+          <Route path="/www.reddit.com/*-now" element={<RedditNowRoute />} />
+          <Route path="/reddit.com/*-now" element={<RedditNowRoute />} />
         </Routes>
       </div>
     </BrowserRouter>
