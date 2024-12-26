@@ -1,38 +1,78 @@
-import React from "react";
+// src/components/layout/Header.jsx
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Github } from "lucide-react";
-import ThemeToggle from "../features/ThemeToggle";
+import { Github, Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/utils/classNames";
 
 const Header = () => {
+  const [theme, setTheme] = useState(() => {
+    return (
+      localStorage.getItem("theme") ||
+      (window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light")
+    );
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((current) => (current === "light" ? "dark" : "light"));
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full border-b",
+        "bg-background/95 backdrop-blur",
+        "supports-[backdrop-filter]:bg-background/60",
+      )}
+    >
       <div className="container max-w-7xl mx-auto">
         <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link to="/" className="flex items-center gap-3">
-              <img
-                src="/live-black-256.png"
-                alt="Reddit-Now Logo"
-                className="h-8 w-8 dark:invert"
-              />
-              <div className="flex flex-col">
-                <h1 className="text-lg font-display font-bold text-foreground">
-                  Reddit-Now
-                </h1>
-                <span className="text-xs text-muted-foreground">
-                  Live Reddit Experience
-                </span>
-              </div>
-            </Link>
-          </div>
+          {/* Logo and Title */}
+          <Link to="/" className="flex items-center gap-3">
+            <img
+              src="/live-black-256.png"
+              alt="Reddit-Now"
+              className="h-8 w-8 dark:invert"
+            />
+            <div>
+              <h1 className="text-lg font-bold">Reddit-Now</h1>
+              <span className="text-xs text-muted-foreground">
+                Live Reddit Experience
+              </span>
+            </div>
+          </Link>
 
+          {/* Actions */}
           <div className="flex items-center gap-4">
-            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="w-9 h-9 rounded-md"
+              aria-label="Toggle theme"
+            >
+              {theme === "light" ? (
+                <Moon className="h-4 w-4" />
+              ) : (
+                <Sun className="h-4 w-4" />
+              )}
+            </Button>
+
             <a
               href="https://github.com/ayoubissaad/reddit-now"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-accent"
+              className={cn(
+                "text-muted-foreground hover:text-foreground",
+                "transition-colors p-2 rounded-lg hover:bg-accent",
+              )}
             >
               <Github className="h-5 w-5" />
             </a>

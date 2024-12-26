@@ -1,5 +1,5 @@
 export const formatTimeAgo = (timestamp) => {
-  const seconds = Math.floor((new Date() - new Date(timestamp * 1000)) / 1000);
+  const seconds = Math.floor((Date.now() - timestamp * 1000) / 1000);
 
   const intervals = {
     year: 31536000,
@@ -14,18 +14,17 @@ export const formatTimeAgo = (timestamp) => {
   for (const [unit, secondsInUnit] of Object.entries(intervals)) {
     const interval = Math.floor(seconds / secondsInUnit);
     if (interval >= 1) {
-      return interval === 1 ? `1 ${unit} ago` : `${interval} ${unit}s ago`;
+      return `${interval} ${unit}${interval === 1 ? "" : "s"} ago`;
     }
   }
+
   return "just now";
 };
 
 export const formatNumber = (num) => {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + "M";
-  }
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + "K";
-  }
-  return num.toString();
+  const formatter = Intl.NumberFormat("en", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
+  return formatter.format(num);
 };
