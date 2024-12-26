@@ -1,4 +1,6 @@
-# 👋 Welcome to Reddit-Now!
+# 👋 Reddit-Now!
+
+/!\ THIS README IS GENERATED USING AI.
 
 Hey there! I'm excited to share Reddit-Now with you - a real-time Reddit thread viewer I built to make following Reddit discussions more fun and interactive. No more manual refreshing needed!
 
