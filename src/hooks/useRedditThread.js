@@ -1,21 +1,42 @@
+// src/hooks/useRedditThread.js
 import { useState, useCallback } from "react";
-import { convertToJsonUrl, isValidRedditUrl } from "../utils/reddit";
+import { convertToJsonUrl } from "../utils/reddit";
 
 const parseComments = (children) => {
   return children
-    .map((child) => ({
-      id: child.data.id,
-      author: child.data.author,
-      content: child.data.body,
-      score: child.data.score,
-      created: child.data.created_utc,
-      isNew: true,
-      replies: child.data.replies?.data?.children
-        ? parseComments(
-            child.data.replies.data.children.filter((c) => c.kind === "t1"),
-          )
-        : [],
-    }))
+    .map((child) => {
+      const commentData = child.data;
+
+      // Process comment body to handle GIFs
+      let processedContent = commentData.body;
+
+      // If there's media metadata and it contains GIFs, replace the markdown with the actual GIF URL
+      if (commentData.media_metadata) {
+        Object.entries(commentData.media_metadata).forEach(([key, value]) => {
+          if (value.e === "AnimatedImage" && value.s?.gif) {
+            // Replace the markdown pattern with the actual gif URL
+            processedContent = processedContent.replace(
+              `![gif](${key})`,
+              `![gif](${value.s.gif})`,
+            );
+          }
+        });
+      }
+
+      return {
+        id: commentData.id,
+        author: commentData.author,
+        content: processedContent,
+        score: commentData.score,
+        created: commentData.created_utc,
+        isNew: true,
+        replies: commentData.replies?.data?.children
+          ? parseComments(
+              commentData.replies.data.children.filter((c) => c.kind === "t1"),
+            )
+          : [],
+      };
+    })
     .sort((a, b) => b.created - a.created);
 };
 
@@ -35,8 +56,10 @@ export const useRedditThread = (url) => {
       setIsLoading(true);
       setError("");
 
-      // Extract thread info from URL
       const jsonUrl = convertToJsonUrl(url);
+      if (!jsonUrl) {
+        throw new Error("Invalid Reddit URL");
+      }
 
       const response = await fetch(jsonUrl, {
         headers: {
@@ -50,7 +73,6 @@ export const useRedditThread = (url) => {
 
       const data = await response.json();
 
-      // Verify we have the comments array
       if (!data[1]?.data?.children) {
         throw new Error("Invalid response format from Reddit");
       }
