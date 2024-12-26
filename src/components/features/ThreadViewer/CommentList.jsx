@@ -13,11 +13,12 @@ const CommentList = ({ comments, expandByDefault }) => {
 
   return (
     <div className="space-y-3">
-      {comments.map((comment) => (
+      {comments.map((comment, index) => (
         <Comment
           key={comment.id}
           comment={comment}
           expandByDefault={expandByDefault}
+          index={index}
         />
       ))}
     </div>

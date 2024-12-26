@@ -72,8 +72,8 @@ const Home = () => (
         <div className="space-y-2">
           <h3 className="text-heading4">Real-time Updates</h3>
           <p className="text-body text-muted-foreground">
-            Watch comments appear instantly with automatic 30-second refresh
-            intervals
+            Watch comments appear instantly with automatic refresh intervals of
+            your choosing
           </p>
         </div>
         <div className="space-y-2">
