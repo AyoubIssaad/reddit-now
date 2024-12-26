@@ -1,6 +1,6 @@
 // Comment.jsx
 import React, { useState, useEffect } from "react";
-import { ChevronDown, ChevronRight, Image, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Image } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { formatTimeAgo } from "@/utils/formatters";
@@ -8,16 +8,56 @@ import { cn } from "@/utils/cn";
 
 const MAX_DEPTH = 5;
 
+// MediaRenderer component for handling images and GIFs
+const MediaRenderer = ({ src, alt, comment }) => {
+  if (src?.includes(".gif")) {
+    return (
+      <img
+        src={src}
+        alt={alt || "GIF"}
+        className="rounded-md max-w-full h-auto my-2"
+        loading="lazy"
+      />
+    );
+  }
+
+  if (src?.includes("preview.redd.it")) {
+    return (
+      <a
+        href={`https://www.reddit.com${comment.permalink}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <Image className="h-4 w-4" />
+        View image on Reddit
+      </a>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt || "Image"}
+      className="rounded-md max-w-full h-auto my-2"
+      loading="lazy"
+    />
+  );
+};
+
 const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
   const [isExpanded, setIsExpanded] = useState(expandByDefault);
   const [isVisible, setIsVisible] = useState(!comment.isNew);
-  const { author, content, score, created, replies, isNew, permalink } = comment;
+  const { author, content, score, created, replies, isNew, permalink } =
+    comment;
+
+  useEffect(() => {
+    setIsExpanded(expandByDefault);
+  }, [expandByDefault]);
 
   useEffect(() => {
     if (isNew) {
-      // Start invisible
       setIsVisible(false);
-      // Trigger animation after a brief delay
       const timer = setTimeout(() => {
         setIsVisible(true);
       }, 50);
@@ -35,12 +75,14 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
       <div
         className={cn(
           "rounded-xl p-4 hover:shadow-md relative border shadow-sm transition-all duration-400",
-          isNew ? "bg-yellow-50 dark:bg-yellow-500/10" : "bg-white dark:bg-zinc-900"
+          isNew
+            ? "bg-yellow-50 dark:bg-yellow-500/10"
+            : "bg-white dark:bg-zinc-900",
         )}
         style={{
           transition: "opacity 400ms ease-out, transform 400ms ease-out",
           opacity: isVisible ? 1 : 0,
-          transform: `translateX(${isVisible ? 0 : -20}px)`
+          transform: `translateX(${isVisible ? 0 : -20}px)`,
         }}
       >
         {/* Comment Header */}
@@ -76,12 +118,21 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
-              img: (props) => (
-                <img {...props} className="rounded-md max-w-full h-auto my-2" loading="lazy" />
-              ),
-              a: (props) => (
-                <a {...props} target="_blank" rel="noopener noreferrer" />
-              ),
+              img: (props) => <MediaRenderer {...props} comment={comment} />,
+              a: ({ node, ...props }) => {
+                if (props.href?.includes("preview.redd.it")) {
+                  return (
+                    <MediaRenderer
+                      src={props.href}
+                      alt={props.title}
+                      comment={comment}
+                    />
+                  );
+                }
+                return (
+                  <a {...props} target="_blank" rel="noopener noreferrer" />
+                );
+              },
             }}
           >
             {content}

@@ -1,3 +1,4 @@
+// src/components/features/ThreadViewer/ThreadViewer.jsx
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -33,7 +34,11 @@ function normalizeRedditUrl(url) {
   }
 }
 
-const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
+const ThreadViewer = ({
+  initialUrl = "",
+  autoStart = false,
+  hideIntro = false,
+}) => {
   const [url, setUrl] = useState(normalizeRedditUrl(initialUrl));
   const [isWatching, setIsWatching] = useState(autoStart);
   const [updateFrequency, setUpdateFrequency] = useState(30000);
@@ -79,69 +84,120 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Controls */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-4 pb-2 border-b z-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <Input
-            type="text"
-            placeholder="Paste Reddit thread URL"
-            value={url}
-            onChange={handleUrlChange}
-            className="h-11 flex-grow"
-          />
-          <div className="flex items-center gap-3">
-            <div className="relative flex items-center">
-              <select
-                value={updateFrequency}
-                onChange={(e) => setUpdateFrequency(Number(e.target.value))}
-                disabled={isLoading}
-                className="h-10 rounded-lg pl-9 pr-3 text-sm bg-background border border-input"
-              >
-                {UPDATE_FREQUENCIES.map(({ value, label }) => (
-                  <option key={value} value={value}>
-                    Update every {label}
-                  </option>
-                ))}
-              </select>
-              <Clock className="absolute left-3 h-4 w-4 text-muted-foreground" />
+    <div className="grid grid-cols-1 gap-4">
+      {/* Introduction Section */}
+      {!isWatching && !hideIntro && (
+        <div className="space-y-12 py-8">
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="flex items-center gap-3 text-heading2">
+                <div className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </div>
+                Live Reddit Experience
+              </h2>
+              <p className="text-body-large text-muted-foreground max-w-2xl">
+                Never miss a moment of the conversation! Follow discussions in
+                real-time without refreshing.
+              </p>
             </div>
-            <Button
-              onClick={handleToggleWatch}
-              variant={isWatching ? "destructive" : "default"}
-              disabled={isLoading || !url}
-              className="h-11 px-6 font-medium"
-            >
-              {isWatching ? "Stop" : "Start"} Watching
-            </Button>
+
+            <div className="grid gap-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  1
+                </div>
+                <div className="text-body text-muted-foreground">
+                  Paste any Reddit thread URL in the box below
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  2
+                </div>
+                <div className="text-body text-muted-foreground">
+                  Or simply replace{" "}
+                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm">
+                    reddit.com
+                  </code>{" "}
+                  with{" "}
+                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm">
+                    reddit-now.com
+                  </code>{" "}
+                  in any Reddit URL
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Settings and Status */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground mt-4">
-          <label className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
-            <input
-              type="checkbox"
-              checked={expandReplies}
-              onChange={handleExpandRepliesChange}
-              className="rounded border-input h-4 w-4"
+      {/* Controls */}
+      <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-2 pb-2 border-b z-20">
+        <div className="space-y-3">
+          {/* URL and Controls Row */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Input
+              type="text"
+              placeholder="Paste Reddit thread URL"
+              value={url}
+              onChange={handleUrlChange}
+              className="h-10 flex-grow"
             />
-            <span>Expand replies by default</span>
-          </label>
-
-          {lastFetch && (
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span>
-                Last updated: {new Date(lastFetch).toLocaleTimeString()}
-              </span>
+              <div className="relative flex items-center">
+                <select
+                  value={updateFrequency}
+                  onChange={(e) => setUpdateFrequency(Number(e.target.value))}
+                  disabled={isLoading}
+                  className="h-10 rounded-lg pl-9 pr-3 text-sm bg-background border border-input"
+                >
+                  {UPDATE_FREQUENCIES.map(({ value, label }) => (
+                    <option key={value} value={value}>
+                      Update every {label}
+                    </option>
+                  ))}
+                </select>
+                <Clock className="absolute left-3 h-4 w-4 text-muted-foreground" />
+              </div>
+              <Button
+                onClick={handleToggleWatch}
+                variant={isWatching ? "destructive" : "default"}
+                disabled={isLoading || !url}
+                className="h-10 px-4 font-medium whitespace-nowrap"
+              >
+                {isWatching ? "Stop" : "Start"} Watching
+              </Button>
             </div>
-          )}
+          </div>
+
+          {/* Settings and Status Row */}
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            <label className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
+              <input
+                type="checkbox"
+                checked={expandReplies}
+                onChange={handleExpandRepliesChange}
+                className="rounded border-input h-4 w-4"
+              />
+              <span>Expand replies by default</span>
+            </label>
+
+            {lastFetch && (
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>
+                  Last updated: {new Date(lastFetch).toLocaleTimeString()}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Thread Content */}
-      <div className="space-y-4">
+      <main className="space-y-4">
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -152,7 +208,7 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
         {threadData && <ThreadHeader threadData={threadData} />}
 
         <CommentList comments={comments} expandByDefault={expandReplies} />
-      </div>
+      </main>
     </div>
   );
 };

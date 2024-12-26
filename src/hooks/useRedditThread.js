@@ -42,10 +42,21 @@ function collectExistingCommentIds(comments) {
 function processComment(comment, existingIds) {
   if (!comment?.id) return null;
 
+  let content = comment.body || "";
+
+  // Process GIFs in media metadata
+  if (comment.media_metadata) {
+    Object.entries(comment.media_metadata).forEach(([key, value]) => {
+      if (value.e === "AnimatedImage" && value.s?.gif) {
+        content = content.replace(`![gif](${key})`, `![gif](${value.s.gif})`);
+      }
+    });
+  }
+
   return {
     id: comment.id,
     author: comment.author || "[deleted]",
-    content: comment.body || "",
+    content,
     score: typeof comment.score === "number" ? comment.score : 0,
     created: comment.created_utc,
     permalink: comment.permalink,
