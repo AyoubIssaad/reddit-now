@@ -2,10 +2,10 @@ import React from "react";
 import { Clock } from "lucide-react";
 
 const FREQUENCY_OPTIONS = [
-  { value: 10000, label: "10 seconds" },
-  { value: 30000, label: "30 seconds" },
-  { value: 60000, label: "1 minute" },
-  { value: 300000, label: "5 minutes" },
+  { value: 10000, label: "10s" },
+  { value: 30000, label: "30s" },
+  { value: 60000, label: "1m" },
+  { value: 300000, label: "5m" },
 ];
 
 const UpdateFrequencySelect = ({ value, onChange, disabled }) => {
