@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Image, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { formatTimeAgo } from "@/utils/formatters";
+import { cn } from "@/utils/cn";
 
 const MAX_DEPTH = 5;
 
@@ -55,16 +56,13 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
     setIsExpanded(expandByDefault);
   }, [expandByDefault]);
 
-  // Process HTML entities in comment content
   const processContent = (rawContent) => {
     if (!rawContent) return "";
-
     if (rawContent.includes("&lt;")) {
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = rawContent;
       return tempDiv.textContent;
     }
-
     return rawContent;
   };
 
@@ -73,18 +71,18 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
 
   return (
     <div className={`relative ${depth > 0 ? "ml-6 mt-3" : "mt-4"}`}>
-      {/* Thread line for nested comments */}
       {depth > 0 && <div className="comment-thread-line -ml-3" />}
 
       <div
-        className={`comment-card ${
+        className={cn(
+          "rounded-xl p-4 transition-all duration-300 hover:shadow-md relative border shadow-sm",
           isNew
-            ? "animate-highlight border-l-4 border-l-primary bg-primary/5"
-            : ""
-        }`}
+            ? "animate-highlight bg-yellow-50 dark:bg-yellow-500/10"
+            : "bg-white dark:bg-zinc-900",
+        )}
       >
-        {/* Comment Header */}
         <div className="flex flex-col">
+          {/* Comment Header */}
           <div className="flex items-center justify-between gap-3 text-sm">
             <div className="flex items-center gap-3">
               <a
