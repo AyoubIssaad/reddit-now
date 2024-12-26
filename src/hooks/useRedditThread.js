@@ -6,18 +6,15 @@ const parseComments = (children) => {
   return children
     .map((child) => {
       const commentData = child.data;
-
-      // Process comment body to handle GIFs
       let processedContent = commentData.body;
 
-      // If there's media metadata and it contains GIFs, replace the markdown with the actual GIF URL
+      // Only handle GIFs in media metadata
       if (commentData.media_metadata) {
         Object.entries(commentData.media_metadata).forEach(([key, value]) => {
           if (value.e === "AnimatedImage" && value.s?.gif) {
-            // Replace the markdown pattern with the actual gif URL
             processedContent = processedContent.replace(
               `![gif](${key})`,
-              `![gif](${value.s.gif})`,
+              `![gif](${value.s.gif})`
             );
           }
         });
@@ -29,10 +26,11 @@ const parseComments = (children) => {
         content: processedContent,
         score: commentData.score,
         created: commentData.created_utc,
+        permalink: commentData.permalink, // Add permalink for Reddit link
         isNew: true,
         replies: commentData.replies?.data?.children
           ? parseComments(
-              commentData.replies.data.children.filter((c) => c.kind === "t1"),
+              commentData.replies.data.children.filter((c) => c.kind === "t1")
             )
           : [],
       };
@@ -78,12 +76,12 @@ export const useRedditThread = (url) => {
       }
 
       const newComments = parseComments(
-        data[1].data.children.filter((c) => c.kind === "t1"),
+        data[1].data.children.filter((c) => c.kind === "t1")
       );
 
       setComments((prevComments) => {
         const existingCommentMap = new Map(
-          prevComments.map((comment) => [comment.id, comment]),
+          prevComments.map((comment) => [comment.id, comment])
         );
 
         const uniqueNewComments = newComments.filter((comment) => {
@@ -95,11 +93,9 @@ export const useRedditThread = (url) => {
           return false;
         });
 
-        const allComments = [...uniqueNewComments, ...prevComments].sort(
-          (a, b) => b.created - a.created,
+        return [...uniqueNewComments, ...prevComments].sort(
+          (a, b) => b.created - a.created
         );
-
-        return allComments;
       });
 
       setLastFetch(new Date());

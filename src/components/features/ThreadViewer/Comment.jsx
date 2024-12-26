@@ -1,17 +1,46 @@
 // src/components/features/ThreadViewer/Comment.jsx
 import React, { useState, useEffect } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Image } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { formatTimeAgo } from "@/utils/formatters"; // Add this import
+import { formatTimeAgo } from "@/utils/formatters";
 
-// Custom renderer for images
-const ImageRenderer = ({ src, alt }) => {
+// Custom renderer for images/GIFs
+const ImageRenderer = ({ src, alt, comment }) => {
+  // Handle GIFs
+  if (src?.includes(".gif")) {
+    return (
+      <img
+        src={src}
+        alt={alt || "GIF"}
+        className="rounded-md max-w-full h-auto my-2"
+        loading="lazy"
+      />
+    );
+  }
+
+  // For regular images, show a link to Reddit
+  if (src?.includes("preview.redd.it")) {
+    const redditUrl = `https://www.reddit.com${comment.permalink}`;
+    return (
+      <a
+        href={redditUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <Image className="h-4 w-4" />
+        View image on Reddit
+      </a>
+    );
+  }
+
+  // Default image handling
   return (
     <img
       src={src}
       alt={alt || "Image"}
-      className="rounded-md max-w-full h-auto"
+      className="rounded-md max-w-full h-auto my-2"
       loading="lazy"
     />
   );
@@ -28,14 +57,16 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
   const hasReplies = replies && replies.length > 0;
   const maxDepth = 5;
 
-  // If the comment contains HTML (like from Reddit's body_html), parse it first
+  // Process comment content (HTML entities)
   const processCommentContent = (content) => {
+    if (!content) return "";
+
     if (content.includes("&lt;")) {
-      // Create a temporary div to parse HTML entities
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = content;
       return tempDiv.textContent;
     }
+
     return content;
   };
 
@@ -64,7 +95,21 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                img: ImageRenderer,
+                img: (props) => <ImageRenderer {...props} comment={comment} />,
+                a: ({ node, ...props }) => {
+                  if (props.href?.includes("preview.redd.it")) {
+                    return (
+                      <ImageRenderer
+                        src={props.href}
+                        alt={props.title}
+                        comment={comment}
+                      />
+                    );
+                  }
+                  return (
+                    <a {...props} target="_blank" rel="noopener noreferrer" />
+                  );
+                },
               }}
             >
               {processCommentContent(content)}
