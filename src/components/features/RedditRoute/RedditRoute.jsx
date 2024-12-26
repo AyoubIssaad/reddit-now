@@ -1,39 +1,31 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
-import Container from "@/components/layout/Container";
 import ThreadViewer from "@/components/features/ThreadViewer/ThreadViewer";
 import SEO from "@/components/SEO";
 
 const RedditRoute = () => {
   const { subreddit, id, title } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
-
   const [threadInfo, setThreadInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Normalize Reddit URL for the thread viewer
-  const redditUrl = `https://reddit.com/r/${subreddit}/comments/${id}/${title || ""}`;
-
-  // Canonical URL for SEO
+  const threadUrl = `https://reddit.com/r/${subreddit}/comments/${id}/${title || ""}`;
   const canonicalUrl = `https://reddit-now.com/r/${subreddit}/comments/${id}`;
 
   useEffect(() => {
     const fetchThreadInfo = async () => {
+      if (!subreddit || !id) return;
+
       try {
         setIsLoading(true);
         setError(null);
 
         const response = await fetch(
           `https://www.reddit.com/r/${subreddit}/comments/${id}/.json`,
-          {
-            headers: {
-              Accept: "application/json",
-            },
-          },
+          { headers: { Accept: "application/json" } },
         );
 
         if (!response.ok) {
@@ -45,41 +37,37 @@ const RedditRoute = () => {
           throw new Error("Failed to fetch thread information");
         }
 
-        const data = await response.json();
+        const [threadData] = await response.json();
+        const thread = threadData?.data?.children?.[0]?.data;
 
-        // Verify the response has the expected structure
-        if (!data[0]?.data?.children?.[0]?.data) {
+        if (!thread) {
           throw new Error("Invalid thread data received");
         }
 
-        const threadData = data[0].data.children[0].data;
-
-        // Check if thread is removed or deleted
-        if (threadData.removed || threadData.deleted) {
+        if (thread.removed || thread.deleted) {
           throw new Error("This thread has been removed or deleted");
         }
 
         setThreadInfo({
-          title: threadData.title,
-          subreddit: threadData.subreddit,
-          author: threadData.author,
-          description: threadData.selftext
-            ? `${threadData.selftext.slice(0, 160)}...`
-            : `Live discussion thread in r/${threadData.subreddit}`,
-          upvoteRatio: threadData.upvote_ratio,
-          score: threadData.score,
-          created: threadData.created_utc,
-          isNsfw: threadData.over_18,
-          isSpoiler: threadData.spoiler,
-          commentCount: threadData.num_comments,
-          permalink: threadData.permalink,
-          url: threadData.url,
+          title: thread.title,
+          subreddit: thread.subreddit,
+          author: thread.author,
+          description: thread.selftext
+            ? `${thread.selftext.slice(0, 160)}...`
+            : `Live discussion thread in r/${thread.subreddit}`,
+          upvoteRatio: thread.upvote_ratio,
+          score: thread.score,
+          created: thread.created_utc,
+          isNsfw: thread.over_18,
+          isSpoiler: thread.spoiler,
+          commentCount: thread.num_comments,
+          permalink: thread.permalink,
+          url: thread.url,
         });
       } catch (err) {
         setError(err.message);
         console.error("Error fetching thread:", err);
 
-        // If it's a 404, redirect to the 404 page
         if (err.message.includes("not found")) {
           navigate("/404", { replace: true });
         }
@@ -88,45 +76,36 @@ const RedditRoute = () => {
       }
     };
 
-    if (subreddit && id) {
-      fetchThreadInfo();
-    }
+    fetchThreadInfo();
   }, [subreddit, id, navigate]);
 
-  // Loading state
   if (isLoading) {
     return (
-      <Container>
-        <div className="flex flex-col items-center justify-center py-16 space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading thread information...</p>
-        </div>
-      </Container>
+      <div className="flex flex-col items-center justify-center py-16 space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading thread information...</p>
+      </div>
     );
   }
 
-  // Error state that hasn't resulted in navigation
-  if (error && location.pathname !== "/404") {
+  if (error && !window.location.pathname.includes("/404")) {
     return (
-      <Container>
+      <div className="py-8">
         <SEO
           title="Error Loading Thread | Reddit-Now"
           description="There was an error loading this Reddit thread."
           robotsContent="noindex, follow"
         />
-        <div className="py-8">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        </div>
-      </Container>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   return (
-    <Container>
-      {/* SEO Component with thread info */}
+    <div>
       <SEO
         title={
           threadInfo?.title
@@ -138,19 +117,18 @@ const RedditRoute = () => {
         ogImage={threadInfo?.url}
         threadInfo={{
           ...threadInfo,
-          fullUrl: redditUrl,
+          fullUrl: threadUrl,
         }}
         robotsContent={threadInfo?.isNsfw ? "noindex, follow" : "index, follow"}
       />
 
-      {/* Thread Viewer */}
       <ThreadViewer
-        initialUrl={redditUrl}
+        initialUrl={threadUrl}
         autoStart={true}
-        key={location.pathname}
+        key={window.location.pathname}
         threadInfo={threadInfo}
       />
-    </Container>
+    </div>
   );
 };
 

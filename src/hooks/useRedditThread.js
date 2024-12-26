@@ -1,44 +1,67 @@
-// src/hooks/useRedditThread.js
 import { useState, useCallback } from "react";
-import { convertToJsonUrl } from "../utils/reddit";
 
-const parseComments = (children) => {
+// Utility to convert a regular Reddit URL to its JSON endpoint
+function convertToJsonUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    let apiUrl = url;
+
+    // Handle different URL formats
+    if (
+      urlObj.hostname === "reddit.com" ||
+      urlObj.hostname === "www.reddit.com"
+    ) {
+      apiUrl = `https://www.reddit.com${urlObj.pathname}`;
+    } else if (urlObj.pathname.startsWith("/r/")) {
+      apiUrl = `https://www.reddit.com${urlObj.pathname}`;
+    } else {
+      return null;
+    }
+
+    // Ensure proper JSON endpoint
+    return `${apiUrl.replace(/\/$/, "")}.json`;
+  } catch {
+    return null;
+  }
+}
+
+// Process comments recursively
+function parseComments(children) {
   return children
+    .filter((child) => child.kind === "t1")
     .map((child) => {
-      const commentData = child.data;
-      let processedContent = commentData.body;
+      const comment = child.data;
+      let content = comment.body;
 
-      // Only handle GIFs in media metadata
-      if (commentData.media_metadata) {
-        Object.entries(commentData.media_metadata).forEach(([key, value]) => {
+      // Process GIFs in media metadata
+      if (comment.media_metadata) {
+        Object.entries(comment.media_metadata).forEach(([key, value]) => {
           if (value.e === "AnimatedImage" && value.s?.gif) {
-            processedContent = processedContent.replace(
+            content = content.replace(
               `![gif](${key})`,
-              `![gif](${value.s.gif})`
+              `![gif](${value.s.gif})`,
             );
           }
         });
       }
 
       return {
-        id: commentData.id,
-        author: commentData.author,
-        content: processedContent,
-        score: commentData.score,
-        created: commentData.created_utc,
-        permalink: commentData.permalink, // Add permalink for Reddit link
+        id: comment.id,
+        author: comment.author,
+        content,
+        score: comment.score,
+        created: comment.created_utc,
+        permalink: comment.permalink,
         isNew: true,
-        replies: commentData.replies?.data?.children
-          ? parseComments(
-              commentData.replies.data.children.filter((c) => c.kind === "t1")
-            )
+        replies: comment.replies?.data?.children
+          ? parseComments(comment.replies.data.children)
           : [],
       };
     })
     .sort((a, b) => b.created - a.created);
-};
+}
 
-export const useRedditThread = (url) => {
+export function useRedditThread(url) {
   const [comments, setComments] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -60,48 +83,43 @@ export const useRedditThread = (url) => {
       }
 
       const response = await fetch(jsonUrl, {
-        headers: {
-          Accept: "application/json",
-        },
+        headers: { Accept: "application/json" },
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Failed to fetch comments (${response.status})`);
       }
 
       const data = await response.json();
-
       if (!data[1]?.data?.children) {
         throw new Error("Invalid response format from Reddit");
       }
 
-      const newComments = parseComments(
-        data[1].data.children.filter((c) => c.kind === "t1")
-      );
+      const newComments = parseComments(data[1].data.children);
 
+      // Merge new comments with existing ones
       setComments((prevComments) => {
-        const existingCommentMap = new Map(
-          prevComments.map((comment) => [comment.id, comment])
-        );
+        const existingIds = new Set(prevComments.map((comment) => comment.id));
 
+        // Filter out duplicates and mark non-new comments
         const uniqueNewComments = newComments.filter((comment) => {
-          const exists = existingCommentMap.has(comment.id);
-          if (!exists) {
-            return true;
+          const exists = existingIds.has(comment.id);
+          if (exists) {
+            comment.isNew = false;
           }
-          comment.isNew = false;
-          return false;
+          return !exists;
         });
 
+        // Sort by creation time
         return [...uniqueNewComments, ...prevComments].sort(
-          (a, b) => b.created - a.created
+          (a, b) => b.created - a.created,
         );
       });
 
       setLastFetch(new Date());
     } catch (err) {
-      console.error("Fetch error:", err);
-      setError(`Error fetching comments. ${err.message}`);
+      console.error("Error fetching comments:", err);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -114,4 +132,4 @@ export const useRedditThread = (url) => {
     lastFetch,
     fetchComments,
   };
-};
+}
