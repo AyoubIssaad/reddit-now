@@ -1,3 +1,4 @@
+// src/hooks/useRedditThread.js
 import { useState, useCallback, useRef } from "react";
 
 function convertToJsonUrl(url) {
@@ -86,6 +87,15 @@ function parseComments(children, existingIds) {
     .sort((a, b) => b.created - a.created);
 }
 
+// Helper function to recursively reset isNew flags
+function resetNewFlags(comments) {
+  return comments.map((comment) => ({
+    ...comment,
+    isNew: false,
+    replies: comment.replies ? resetNewFlags(comment.replies) : [],
+  }));
+}
+
 export function useRedditThread(url) {
   const [comments, setComments] = useState([]);
   const [threadData, setThreadData] = useState(null);
@@ -144,10 +154,7 @@ export function useRedditThread(url) {
 
         newComments.forEach((newComment) => {
           if (!existingCommentsMap.has(newComment.id)) {
-            existingCommentsMap.set(newComment.id, {
-              ...newComment,
-              isNew: true,
-            });
+            existingCommentsMap.set(newComment.id, newComment);
           }
         });
 
@@ -158,16 +165,7 @@ export function useRedditThread(url) {
 
       // Reset new flags after animation
       setTimeout(() => {
-        setComments((prev) =>
-          prev.map((comment) => ({
-            ...comment,
-            isNew: false,
-            replies: comment.replies.map((reply) => ({
-              ...reply,
-              isNew: false,
-            })),
-          })),
-        );
+        setComments((prevComments) => resetNewFlags(prevComments));
       }, 3000);
 
       setLastFetch(new Date());
