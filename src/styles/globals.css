@@ -70,15 +70,15 @@
   }
 
   ::-webkit-scrollbar-track {
-    background-color: transparent;
+    @apply bg-muted/20;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted rounded-full border-4 border-solid border-transparent bg-clip-padding;
+    @apply bg-muted-foreground/50 rounded-full border-4 border-solid border-transparent bg-clip-padding;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground;
+    @apply bg-muted-foreground/80;
   }
 }
 
