@@ -60,10 +60,17 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
   useEffect(() => {
     if (!isWatching || !url) return;
 
+    // Initial fetch
     fetchComments();
-    const interval = setInterval(fetchComments, updateFrequency);
-    return () => clearInterval(interval);
-  }, [isWatching, updateFrequency, fetchComments, url]);
+
+    // Set up interval
+    const intervalId = setInterval(fetchComments, updateFrequency);
+
+    // Cleanup
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isWatching, updateFrequency, url, fetchComments]); // fetchComments won't change now
 
   // Auto-start if configured
   useEffect(() => {

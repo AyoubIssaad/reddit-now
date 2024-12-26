@@ -77,7 +77,11 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
       {depth > 0 && <div className="comment-thread-line -ml-3" />}
 
       <div
-        className={`comment-card ${isNew ? "animate-fade-in border-l-4 border-l-primary" : ""}`}
+        className={`comment-card ${
+          isNew
+            ? "animate-highlight border-l-4 border-l-primary bg-primary/5"
+            : ""
+        }`}
       >
         {/* Comment Header */}
         <div className="flex flex-col">

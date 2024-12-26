@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+// src/hooks/useRedditThread.js
+import { useState, useCallback, useRef } from "react";
 
 // Utility to convert a regular Reddit URL to its JSON endpoint
 function convertToJsonUrl(url) {
@@ -18,45 +19,63 @@ function convertToJsonUrl(url) {
       return null;
     }
 
-    // Ensure proper JSON endpoint
-    return `${apiUrl.replace(/\/$/, "")}.json`;
+    // Ensure proper JSON endpoint with optimized parameters
+    const baseUrl = `${apiUrl.replace(/\/$/, "")}.json`;
+    const params = new URLSearchParams({
+      sort: "new", // Get newest comments first
+      limit: "200", // Fetch up to 200 comments
+      depth: "5", // Limit comment tree depth to 5 levels
+      raw_json: "1", // Get raw JSON (better handling of special characters)
+    });
+    return `${baseUrl}?${params.toString()}`;
   } catch {
     return null;
   }
 }
 
 // Process comments recursively
-function parseComments(children) {
+function processComment(comment, existingComments = new Map()) {
+  let content = comment.body;
+
+  // Process GIFs in media metadata
+  if (comment.media_metadata) {
+    Object.entries(comment.media_metadata).forEach(([key, value]) => {
+      if (value.e === "AnimatedImage" && value.s?.gif) {
+        content = content.replace(`![gif](${key})`, `![gif](${value.s.gif})`);
+      }
+    });
+  }
+
+  const existingComment = existingComments.get(comment.id);
+  const isNew = !existingComment;
+
+  return {
+    id: comment.id,
+    author: comment.author,
+    content,
+    score: comment.score,
+    created: comment.created_utc,
+    permalink: comment.permalink,
+    isNew,
+    replies: [],
+  };
+}
+
+function parseComments(children, existingComments = new Map()) {
   return children
     .filter((child) => child.kind === "t1")
     .map((child) => {
-      const comment = child.data;
-      let content = comment.body;
+      const comment = processComment(child.data, existingComments);
 
-      // Process GIFs in media metadata
-      if (comment.media_metadata) {
-        Object.entries(comment.media_metadata).forEach(([key, value]) => {
-          if (value.e === "AnimatedImage" && value.s?.gif) {
-            content = content.replace(
-              `![gif](${key})`,
-              `![gif](${value.s.gif})`,
-            );
-          }
-        });
+      // Process replies recursively
+      if (child.data.replies?.data?.children) {
+        comment.replies = parseComments(
+          child.data.replies.data.children,
+          existingComments,
+        );
       }
 
-      return {
-        id: comment.id,
-        author: comment.author,
-        content,
-        score: comment.score,
-        created: comment.created_utc,
-        permalink: comment.permalink,
-        isNew: true,
-        replies: comment.replies?.data?.children
-          ? parseComments(comment.replies.data.children)
-          : [],
-      };
+      return comment;
     })
     .sort((a, b) => b.created - a.created);
 }
@@ -66,6 +85,10 @@ export function useRedditThread(url) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [lastFetch, setLastFetch] = useState(null);
+  const commentsRef = useRef(comments);
+
+  // Update ref when comments change
+  commentsRef.current = comments;
 
   const fetchComments = useCallback(async () => {
     if (!url) {
@@ -95,26 +118,49 @@ export function useRedditThread(url) {
         throw new Error("Invalid response format from Reddit");
       }
 
-      const newComments = parseComments(data[1].data.children);
+      // Create a Map of existing comments for faster lookups
+      const existingComments = new Map(
+        commentsRef.current.map((comment) => [comment.id, comment]),
+      );
 
-      // Merge new comments with existing ones
+      // Parse new comments
+      const newComments = parseComments(
+        data[1].data.children,
+        existingComments,
+      );
+
+      // Update comments state
       setComments((prevComments) => {
-        const existingIds = new Set(prevComments.map((comment) => comment.id));
+        const mergedComments = [...newComments, ...prevComments]
+          .reduce((acc, comment) => {
+            const existingIndex = acc.findIndex((c) => c.id === comment.id);
+            if (existingIndex === -1) {
+              // New comment, add it
+              acc.push(comment);
+            } else {
+              // Update existing comment but preserve isNew flag
+              const updatedComment = {
+                ...comment,
+                isNew: acc[existingIndex].isNew,
+              };
+              acc[existingIndex] = updatedComment;
+            }
+            return acc;
+          }, [])
+          .sort((a, b) => b.created - a.created);
 
-        // Filter out duplicates and mark non-new comments
-        const uniqueNewComments = newComments.filter((comment) => {
-          const exists = existingIds.has(comment.id);
-          if (exists) {
-            comment.isNew = false;
-          }
-          return !exists;
-        });
-
-        // Sort by creation time
-        return [...uniqueNewComments, ...prevComments].sort(
-          (a, b) => b.created - a.created,
-        );
+        return mergedComments;
       });
+
+      // Reset new flags after 3 seconds
+      setTimeout(() => {
+        setComments((prev) =>
+          prev.map((comment) => ({
+            ...comment,
+            isNew: false,
+          })),
+        );
+      }, 3000);
 
       setLastFetch(new Date());
     } catch (err) {
@@ -123,7 +169,7 @@ export function useRedditThread(url) {
     } finally {
       setIsLoading(false);
     }
-  }, [url]);
+  }, [url]); // Only depend on url, use ref for comments
 
   return {
     comments,

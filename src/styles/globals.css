@@ -120,8 +120,16 @@
 /* Component styles */
 @layer components {
   .comment-card {
-    @apply border bg-card text-card-foreground shadow-sm rounded-xl p-4 transition-all duration-300 hover:shadow-md;
+    @apply border bg-card text-card-foreground shadow-sm rounded-xl p-4 transition-all duration-300 hover:shadow-md relative;
   }
+
+  .animate-highlight {
+    animation: highlight 3s ease-out;
+  }
+
+  /* .comment-card { */
+  /*   @apply border bg-card text-card-foreground shadow-sm rounded-xl p-4 transition-all duration-300 hover:shadow-md; */
+  /* } */
 
   .comment-thread-line {
     @apply absolute left-0 top-0 bottom-0 w-0.5 bg-border opacity-50;
@@ -133,5 +141,14 @@
 
   .input-primary {
     @apply flex h-10 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}
+
+@keyframes highlight {
+  0% {
+    background-color: hsl(var(--primary) / 0.15);
+  }
+  100% {
+    background-color: hsl(var(--primary) / 0.05);
   }
 }
