@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ChevronDown, ChevronRight, Image } from "lucide-react";
+import { ChevronDown, ChevronRight, Image, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { formatTimeAgo } from "@/utils/formatters";
@@ -48,7 +48,8 @@ const MediaRenderer = ({ src, alt, comment }) => {
 
 const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
   const [isExpanded, setIsExpanded] = useState(expandByDefault);
-  const { author, content, score, created, replies, isNew } = comment;
+  const { author, content, score, created, replies, isNew, permalink } =
+    comment;
 
   useEffect(() => {
     setIsExpanded(expandByDefault);
@@ -80,15 +81,31 @@ const Comment = ({ comment, depth = 0, expandByDefault = false }) => {
       >
         {/* Comment Header */}
         <div className="flex flex-col">
-          <div className="flex items-center gap-3 text-sm">
-            <span className="font-medium text-foreground hover:underline">
-              {author}
-            </span>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{score === 1 ? "1 point" : `${score} points`}</span>
-              <span>•</span>
-              <span>{formatTimeAgo(created)}</span>
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <div className="flex items-center gap-3">
+              <a
+                href={`https://reddit.com/user/${author}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground hover:underline"
+              >
+                {author}
+              </a>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>{score === 1 ? "1 point" : `${score} points`}</span>
+                <span>•</span>
+                <span>{formatTimeAgo(created)}</span>
+              </div>
             </div>
+            <a
+              href={`https://reddit.com${permalink}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="View on Reddit"
+              className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
           </div>
 
           {/* Comment Content */}
