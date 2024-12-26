@@ -20,7 +20,6 @@ function convertToJsonUrl(url) {
     const params = new URLSearchParams({
       sort: "new",
       limit: "200",
-      depth: "5",
       raw_json: "1",
     });
     return `${baseUrl}?${params.toString()}`;
@@ -32,6 +31,7 @@ function convertToJsonUrl(url) {
 function collectExistingCommentIds(comments) {
   const ids = new Set();
   function traverse(comment) {
+    if (!comment) return;
     ids.add(comment.id);
     comment.replies?.forEach(traverse);
   }
@@ -40,22 +40,13 @@ function collectExistingCommentIds(comments) {
 }
 
 function processComment(comment, existingIds) {
-  let content = comment.body;
-
-  // Process GIFs in media metadata
-  if (comment.media_metadata) {
-    Object.entries(comment.media_metadata).forEach(([key, value]) => {
-      if (value.e === "AnimatedImage" && value.s?.gif) {
-        content = content.replace(`![gif](${key})`, `![gif](${value.s.gif})`);
-      }
-    });
-  }
+  if (!comment?.id) return null;
 
   return {
     id: comment.id,
-    author: comment.author,
-    content,
-    score: comment.score,
+    author: comment.author || "[deleted]",
+    content: comment.body || "",
+    score: typeof comment.score === "number" ? comment.score : 0,
     created: comment.created_utc,
     permalink: comment.permalink,
     isNew: !existingIds.has(comment.id),
@@ -64,10 +55,14 @@ function processComment(comment, existingIds) {
 }
 
 function parseComments(children, existingIds) {
+  if (!Array.isArray(children)) return [];
+
   return children
-    .filter((child) => child.kind === "t1")
+    .filter((child) => child?.kind === "t1" && child?.data)
     .map((child) => {
       const comment = processComment(child.data, existingIds);
+      if (!comment) return null;
+
       if (child.data.replies?.data?.children) {
         comment.replies = parseComments(
           child.data.replies.data.children,
@@ -76,15 +71,17 @@ function parseComments(children, existingIds) {
       }
       return comment;
     })
+    .filter(Boolean)
     .sort((a, b) => b.created - a.created);
 }
 
 export function useRedditThread(url) {
   const [comments, setComments] = useState([]);
+  const [threadData, setThreadData] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [lastFetch, setLastFetch] = useState(null);
-  const commentsRef = useRef(comments);
+  const commentsRef = useRef([]);
 
   commentsRef.current = comments;
 
@@ -112,33 +109,43 @@ export function useRedditThread(url) {
       }
 
       const data = await response.json();
-      if (!data[1]?.data?.children) {
-        throw new Error("Invalid response format from Reddit");
+
+      // Extract thread info
+      const threadInfo = data[0]?.data?.children?.[0]?.data;
+      if (threadInfo) {
+        setThreadData(threadInfo);
       }
 
+      // Process comments
       const existingIds = collectExistingCommentIds(commentsRef.current);
-      const newComments = parseComments(data[1].data.children, existingIds);
+      const newComments = parseComments(
+        data[1]?.data?.children || [],
+        existingIds,
+      );
 
       setComments((prevComments) => {
-        const mergedComments = [...newComments, ...prevComments]
-          .reduce((acc, comment) => {
-            const existingIndex = acc.findIndex((c) => c.id === comment.id);
-            if (existingIndex === -1) {
-              acc.push(comment);
-            } else {
-              acc[existingIndex] = {
-                ...comment,
-                isNew: acc[existingIndex].isNew,
-              };
-            }
-            return acc;
-          }, [])
-          .sort((a, b) => b.created - a.created);
+        const existingCommentsMap = new Map(
+          prevComments.map((comment) => [
+            comment.id,
+            { ...comment, isNew: false },
+          ]),
+        );
 
-        return mergedComments;
+        newComments.forEach((newComment) => {
+          if (!existingCommentsMap.has(newComment.id)) {
+            existingCommentsMap.set(newComment.id, {
+              ...newComment,
+              isNew: true,
+            });
+          }
+        });
+
+        return Array.from(existingCommentsMap.values()).sort(
+          (a, b) => b.created - a.created,
+        );
       });
 
-      // Reset new flags after 3 seconds
+      // Reset new flags after animation
       setTimeout(() => {
         setComments((prev) =>
           prev.map((comment) => ({
@@ -154,12 +161,11 @@ export function useRedditThread(url) {
 
       setLastFetch(new Date());
     } catch (err) {
-      console.error("Error fetching comments:", err);
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
   }, [url]);
 
-  return { comments, error, isLoading, lastFetch, fetchComments };
+  return { comments, error, isLoading, lastFetch, fetchComments, threadData };
 }
