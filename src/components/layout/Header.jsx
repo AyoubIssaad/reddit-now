@@ -1,6 +1,4 @@
-// src/components/layout/Header.jsx
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { Github, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/utils/classNames";
@@ -24,6 +22,11 @@ const Header = () => {
     setTheme((current) => (current === "light" ? "dark" : "light"));
   };
 
+  const handleLogoClick = (e) => {
+    e.preventDefault();
+    window.location.href = "/";
+  };
+
   return (
     <header
       className={cn(
@@ -35,19 +38,22 @@ const Header = () => {
       <div className="container max-w-7xl mx-auto">
         <div className="flex h-16 items-center justify-between">
           {/* Logo and Title */}
-          <Link to="/" className="flex items-center gap-3">
+          <button
+            onClick={handleLogoClick}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          >
             <img
               src="/live-black-256.png"
               alt="Reddit-Now"
               className="h-8 w-8 dark:invert"
             />
             <div>
-              <h1 className="text-lg font-bold">Reddit-Now</h1>
+              <h1 className="text-lg font-bold text-left">Reddit-Now</h1>
               <span className="text-xs text-muted-foreground">
                 Live Reddit Experience
               </span>
             </div>
-          </Link>
+          </button>
 
           {/* Actions */}
           <div className="flex items-center gap-4">
