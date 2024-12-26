@@ -1,3 +1,4 @@
+// src/components/features/RedditRoute/RedditRoute.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -81,16 +82,18 @@ const RedditRoute = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Loading thread information...</p>
+      <div className="max-w-3xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-center py-16 space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading thread information...</p>
+        </div>
       </div>
     );
   }
 
   if (error && !window.location.pathname.includes("/404")) {
     return (
-      <div className="py-8">
+      <div className="max-w-3xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <SEO
           title="Error Loading Thread | Reddit-Now"
           description="There was an error loading this Reddit thread."
@@ -105,7 +108,7 @@ const RedditRoute = () => {
   }
 
   return (
-    <div>
+    <div className="max-w-3xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
       <SEO
         title={
           threadInfo?.title

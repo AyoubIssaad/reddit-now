@@ -25,7 +25,10 @@ function normalizeRedditUrl(url) {
       return url.replace("reddit.com", "www.reddit.com");
     }
 
-    if (urlObj.hostname === "localhost" || urlObj.hostname.includes("reddit-now.com")) {
+    if (
+      urlObj.hostname === "localhost" ||
+      urlObj.hostname.includes("reddit-now.com")
+    ) {
       return `https://www.reddit.com${urlObj.pathname}${urlObj.search}`;
     }
 
@@ -40,10 +43,11 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
   const [isWatching, setIsWatching] = useState(autoStart);
   const [updateFrequency, setUpdateFrequency] = useState(30000);
   const [expandReplies, setExpandReplies] = useState(
-    localStorage.getItem("expand-replies") === "true"
+    localStorage.getItem("expand-replies") === "true",
   );
 
-  const { comments, error, isLoading, lastFetch, fetchComments } = useRedditThread(url);
+  const { comments, error, isLoading, lastFetch, fetchComments } =
+    useRedditThread(url);
 
   // Handle initialUrl changes
   useEffect(() => {
@@ -103,7 +107,7 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
               value={updateFrequency}
               onChange={(e) => setUpdateFrequency(Number(e.target.value))}
               disabled={isLoading}
-              className="h-10 rounded-lg pl-9 pr-3 text-sm"
+              className="h-10 rounded-lg pl-9 pr-3 text-sm bg-background border border-input"
             >
               {UPDATE_FREQUENCIES.map(({ value, label }) => (
                 <option key={value} value={value}>
@@ -141,7 +145,9 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
         {lastFetch && (
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            <span>Last updated: {new Date(lastFetch).toLocaleTimeString()}</span>
+            <span>
+              Last updated: {new Date(lastFetch).toLocaleTimeString()}
+            </span>
           </div>
         )}
       </div>
@@ -156,10 +162,7 @@ const ThreadViewer = ({ initialUrl = "", autoStart = false }) => {
 
       {/* Comments */}
       <div className="mt-8">
-        <CommentList
-          comments={comments}
-          expandByDefault={expandReplies}
-        />
+        <CommentList comments={comments} expandByDefault={expandReplies} />
       </div>
     </div>
   );
