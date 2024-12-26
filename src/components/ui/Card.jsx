@@ -1,5 +1,6 @@
-import * as React from "react";
-import { cn } from "../../utils/cn";
+// src/components/ui/Card.jsx
+import React from "react";
+import { cn } from "@/utils/classNames";
 
 const Card = React.forwardRef(({ className, ...props }, ref) => (
   <div
@@ -11,6 +12,7 @@ const Card = React.forwardRef(({ className, ...props }, ref) => (
     {...props}
   />
 ));
+
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef(({ className, ...props }, ref) => (
@@ -20,6 +22,7 @@ const CardHeader = React.forwardRef(({ className, ...props }, ref) => (
     {...props}
   />
 ));
+
 CardHeader.displayName = "CardHeader";
 
 const CardTitle = React.forwardRef(({ className, ...props }, ref) => (
@@ -29,6 +32,7 @@ const CardTitle = React.forwardRef(({ className, ...props }, ref) => (
     {...props}
   />
 ));
+
 CardTitle.displayName = "CardTitle";
 
 const CardDescription = React.forwardRef(({ className, ...props }, ref) => (
@@ -38,11 +42,13 @@ const CardDescription = React.forwardRef(({ className, ...props }, ref) => (
     {...props}
   />
 ));
+
 CardDescription.displayName = "CardDescription";
 
 const CardContent = React.forwardRef(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
 ));
+
 CardContent.displayName = "CardContent";
 
 const CardFooter = React.forwardRef(({ className, ...props }, ref) => (
@@ -52,6 +58,7 @@ const CardFooter = React.forwardRef(({ className, ...props }, ref) => (
     {...props}
   />
 ));
+
 CardFooter.displayName = "CardFooter";
 
 export {
