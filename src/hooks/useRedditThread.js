@@ -248,7 +248,7 @@ export function useRedditThread(url) {
       setComments((prevComments) => mergeComments(prevComments, newComments));
 
       // Set new timeout for clearing flags
-      timeoutRef.current = setTimeout(resetNewFlags, 3000);
+      timeoutRef.current = setTimeout(resetNewFlags, 8000);
 
       setLastFetch(new Date());
 

@@ -150,7 +150,7 @@
   }
 
   .animate-highlight {
-    animation: highlight 3s ease-out forwards;
+    animation: highlight 8s ease-out forwards;
   }
 
   /* .comment-card { */
