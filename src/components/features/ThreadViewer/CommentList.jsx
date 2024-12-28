@@ -1,7 +1,13 @@
 import React from "react";
 import Comment from "./Comment";
 
-const CommentList = ({ comments = [], expandByDefault = false }) => {
+const CommentList = ({
+  comments = [],
+  expandByDefault = false,
+  isPinned,
+  onPinComment,
+  onUnpinComment,
+}) => {
   if (!comments.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -17,6 +23,9 @@ const CommentList = ({ comments = [], expandByDefault = false }) => {
           key={comment.id}
           comment={comment}
           expandByDefault={expandByDefault}
+          isPinned={isPinned?.(comment.id)}
+          onPinComment={onPinComment}
+          onUnpinComment={onUnpinComment}
         />
       ))}
     </div>

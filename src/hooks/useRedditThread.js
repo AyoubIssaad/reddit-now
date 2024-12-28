@@ -1,5 +1,5 @@
 // src/hooks/useRedditThread.js
-import { useState, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 function convertToJsonUrl(url) {
   try {
@@ -20,7 +20,7 @@ function convertToJsonUrl(url) {
     const baseUrl = `${apiUrl.replace(/\/$/, "")}.json`;
     const params = new URLSearchParams({
       sort: "new",
-      limit: "200",
+      limit: "500",
       raw_json: "1",
     });
     return `${baseUrl}?${params.toString()}`;
@@ -29,18 +29,22 @@ function convertToJsonUrl(url) {
   }
 }
 
-function collectExistingCommentIds(comments) {
-  const ids = new Set();
-  function traverse(comment) {
+function buildCommentMap(comments) {
+  const map = new Map();
+
+  function addToMap(comment) {
     if (!comment) return;
-    ids.add(comment.id);
-    comment.replies?.forEach(traverse);
+    map.set(comment.id, comment);
+    if (comment.replies) {
+      comment.replies.forEach(addToMap);
+    }
   }
-  comments.forEach(traverse);
-  return ids;
+
+  comments.forEach(addToMap);
+  return map;
 }
 
-function processComment(comment, existingIds) {
+function processComment(comment, existingCommentMap = new Map()) {
   if (!comment?.id) return null;
 
   let content = comment.body || "";
@@ -54,6 +58,9 @@ function processComment(comment, existingIds) {
     });
   }
 
+  const existingComment = existingCommentMap.get(comment.id);
+  const isNew = !existingComment;
+
   return {
     id: comment.id,
     author: comment.author || "[deleted]",
@@ -61,39 +68,106 @@ function processComment(comment, existingIds) {
     score: typeof comment.score === "number" ? comment.score : 0,
     created: comment.created_utc,
     permalink: comment.permalink,
-    isNew: !existingIds.has(comment.id),
+    isNew,
     replies: [],
   };
 }
 
-function parseComments(children, existingIds) {
+function parseComments(children, existingCommentMap) {
   if (!Array.isArray(children)) return [];
 
   return children
     .filter((child) => child?.kind === "t1" && child?.data)
     .map((child) => {
-      const comment = processComment(child.data, existingIds);
+      const comment = processComment(child.data, existingCommentMap);
       if (!comment) return null;
 
+      // Process replies recursively
       if (child.data.replies?.data?.children) {
         comment.replies = parseComments(
           child.data.replies.data.children,
-          existingIds,
+          existingCommentMap,
         );
       }
+
       return comment;
     })
-    .filter(Boolean)
-    .sort((a, b) => b.created - a.created);
+    .filter(Boolean);
 }
 
-// Helper function to recursively reset isNew flags
-function resetNewFlags(comments) {
-  return comments.map((comment) => ({
-    ...comment,
-    isNew: false,
-    replies: comment.replies ? resetNewFlags(comment.replies) : [],
-  }));
+function mergeComments(oldComments, newComments) {
+  const mergedMap = new Map();
+
+  // Helper function to merge a comment and its replies
+  function mergeComment(comment, isFromNewSet = false) {
+    const existing = mergedMap.get(comment.id);
+
+    if (existing) {
+      // Keep track of existing replies
+      const existingReplies = new Map(
+        existing.replies.map((reply) => [reply.id, reply]),
+      );
+
+      // Process new replies
+      const mergedReplies = comment.replies.map((newReply) => {
+        const existingReply = existingReplies.get(newReply.id);
+        if (existingReply) {
+          // If reply exists, merge it recursively
+          return {
+            ...existingReply,
+            ...newReply,
+            isNew: existingReply.isNew || newReply.isNew,
+            replies: mergeComment(newReply, isFromNewSet).replies,
+          };
+        }
+        // If reply is new, mark it as new
+        return {
+          ...newReply,
+          isNew: true,
+        };
+      });
+
+      // Add existing replies that weren't in the new set
+      existing.replies.forEach((reply) => {
+        if (!mergedReplies.some((r) => r.id === reply.id)) {
+          mergedReplies.push(reply);
+        }
+      });
+
+      const merged = {
+        ...existing,
+        ...comment,
+        isNew: existing.isNew || (isFromNewSet && !existing),
+        replies: mergedReplies.sort((a, b) => b.created - a.created),
+      };
+
+      mergedMap.set(comment.id, merged);
+      return merged;
+    } else {
+      // Process replies for new comment
+      const processedReplies = comment.replies.map((reply) => {
+        return mergeComment(reply, isFromNewSet);
+      });
+
+      const newComment = {
+        ...comment,
+        isNew: isFromNewSet,
+        replies: processedReplies.sort((a, b) => b.created - a.created),
+      };
+
+      mergedMap.set(comment.id, newComment);
+      return newComment;
+    }
+  }
+
+  // Process all old comments first
+  oldComments.forEach((comment) => mergeComment(comment, false));
+
+  // Then process new comments, potentially updating existing ones
+  newComments.forEach((comment) => mergeComment(comment, true));
+
+  // Convert map to array and sort
+  return Array.from(mergedMap.values()).sort((a, b) => b.created - a.created);
 }
 
 export function useRedditThread(url) {
@@ -137,44 +211,41 @@ export function useRedditThread(url) {
         setThreadData(threadInfo);
       }
 
-      // Process comments
-      const existingIds = collectExistingCommentIds(commentsRef.current);
+      // Build map of existing comments
+      const existingCommentMap = buildCommentMap(commentsRef.current);
+
+      // Parse new comments
       const newComments = parseComments(
         data[1]?.data?.children || [],
-        existingIds,
+        existingCommentMap,
       );
 
-      setComments((prevComments) => {
-        const existingCommentsMap = new Map(
-          prevComments.map((comment) => [
-            comment.id,
-            { ...comment, isNew: false },
-          ]),
-        );
-
-        newComments.forEach((newComment) => {
-          if (!existingCommentsMap.has(newComment.id)) {
-            existingCommentsMap.set(newComment.id, newComment);
-          }
-        });
-
-        return Array.from(existingCommentsMap.values()).sort(
-          (a, b) => b.created - a.created,
-        );
-      });
-
-      // Reset new flags after animation
-      setTimeout(() => {
-        setComments((prevComments) => resetNewFlags(prevComments));
-      }, 3000);
+      // Merge old and new comments
+      setComments((prevComments) => mergeComments(prevComments, newComments));
 
       setLastFetch(new Date());
     } catch (err) {
       setError(err.message);
+      console.error("Error fetching thread:", err);
     } finally {
       setIsLoading(false);
     }
   }, [url]);
 
-  return { comments, error, isLoading, lastFetch, fetchComments, threadData };
+  // Reset comments when URL changes
+  useEffect(() => {
+    setComments([]);
+    setThreadData(null);
+    setError("");
+    setLastFetch(null);
+  }, [url]);
+
+  return {
+    comments,
+    error,
+    isLoading,
+    lastFetch,
+    fetchComments,
+    threadData,
+  };
 }

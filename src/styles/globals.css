@@ -200,3 +200,19 @@
   animation: slide-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   animation-delay: calc(var(--animation-delay, 0) * 0.1s);
 }
+
+@keyframes highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--primary) / 0.2);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(var(--primary) / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--primary) / 0);
+  }
+}
+
+.highlight-comment {
+  animation: highlight-pulse 2s ease-out;
+}

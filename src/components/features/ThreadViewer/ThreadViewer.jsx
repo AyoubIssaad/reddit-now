@@ -6,7 +6,9 @@ import { AlertCircle, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
 import CommentList from "./CommentList";
 import ThreadHeader from "./ThreadHeader";
+import PinnedComments from "./PinnedComments";
 import { useRedditThread } from "@/hooks/useRedditThread";
+import { usePinnedComments } from "@/hooks/usePinnedComments";
 
 const UPDATE_FREQUENCIES = [
   { value: 10000, label: "10s" },
@@ -49,6 +51,18 @@ const ThreadViewer = ({
   const { comments, error, isLoading, lastFetch, fetchComments, threadData } =
     useRedditThread(url);
 
+  // Initialize pinned comments functionality
+  const threadId = threadData?.id;
+  const {
+    pinnedCommentIds,
+    pinComment,
+    unpinComment,
+    clearPins,
+    isPinned,
+    canPin,
+    MAX_PINNED_COMMENTS,
+  } = usePinnedComments(threadId);
+
   useEffect(() => {
     if (initialUrl) {
       setUrl(normalizeRedditUrl(initialUrl));
@@ -81,6 +95,36 @@ const ThreadViewer = ({
     const newValue = e.target.checked;
     setExpandReplies(newValue);
     localStorage.setItem("expand-replies", newValue);
+  };
+
+  const handleNavigateToComment = (commentId) => {
+    const element = document.getElementById(`comment-${commentId}`);
+    if (element) {
+      // Get the header height
+      const header = document.querySelector("header");
+      const headerHeight = header ? header.offsetHeight : 0;
+      const controlsHeight =
+        document.querySelector(".controls")?.offsetHeight || 0;
+
+      // Calculate the position to scroll to
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition =
+        elementPosition +
+        window.pageYOffset -
+        headerHeight -
+        controlsHeight -
+        20; // 20px extra padding
+
+      // Smooth scroll to the element
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+
+      // Add highlight effect
+      element.classList.add("highlight-comment");
+      setTimeout(() => element.classList.remove("highlight-comment"), 2000);
+    }
   };
 
   return (
@@ -207,7 +251,28 @@ const ThreadViewer = ({
 
         {threadData && <ThreadHeader threadData={threadData} />}
 
-        <CommentList comments={comments} expandByDefault={expandReplies} />
+        {/* Pinned Comments Section */}
+        {threadData && (
+          <PinnedComments
+            threadId={threadId}
+            comments={comments}
+            pinnedCommentIds={pinnedCommentIds}
+            onPinComment={pinComment}
+            onUnpinComment={unpinComment}
+            onClearPins={clearPins}
+            onNavigateToComment={handleNavigateToComment}
+          />
+        )}
+
+        <CommentList
+          comments={comments}
+          expandByDefault={expandReplies}
+          isPinned={isPinned}
+          onPinComment={pinComment}
+          onUnpinComment={unpinComment}
+          canPin={canPin}
+          maxPins={MAX_PINNED_COMMENTS}
+        />
       </main>
     </div>
   );
