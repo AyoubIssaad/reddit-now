@@ -1,3 +1,4 @@
+// src/components/features/ThreadViewer/Comment.jsx
 import React, { useState, useEffect } from "react";
 import {
   ChevronDown,
@@ -5,6 +6,7 @@ import {
   ExternalLink,
   Image,
   Pin,
+  Eye,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -58,6 +60,8 @@ const Comment = ({
   isPinned,
   onPinComment,
   onUnpinComment,
+  isWatched,
+  onToggleWatch,
 }) => {
   const [isExpanded, setIsExpanded] = useState(expandByDefault);
   const [isVisible, setIsVisible] = useState(!comment.isNew);
@@ -88,6 +92,7 @@ const Comment = ({
 
   const hasReplies = replies?.length > 0;
   const showReplies = hasReplies && isExpanded && depth < MAX_DEPTH;
+  const watchedStatus = isWatched?.(author);
 
   return (
     <div
@@ -103,6 +108,7 @@ const Comment = ({
             ? "bg-yellow-50 dark:bg-yellow-500/10"
             : "bg-white dark:bg-zinc-900",
           isPinned && "ring-1 ring-primary ring-opacity-50",
+          watchedStatus && "ring-1 ring-primary/30",
         )}
         style={{
           transition: "opacity 400ms ease-out, transform 400ms ease-out",
@@ -113,14 +119,21 @@ const Comment = ({
         {/* Comment Header */}
         <div className="flex items-center justify-between gap-3 text-sm">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <a
-              href={`https://reddit.com/user/${author}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-foreground hover:underline"
-            >
-              {author}
-            </a>
+            <div className="flex items-center gap-2">
+              <a
+                href={`https://reddit.com/user/${author}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground hover:underline"
+              >
+                {author}
+              </a>
+              {watchedStatus && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                  Watched
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{score === 1 ? "1 point" : `${score} points`}</span>
               <span>•</span>
@@ -129,6 +142,22 @@ const Comment = ({
           </div>
 
           <div className="flex items-center gap-1">
+            {/* Watch Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onToggleWatch?.(author)}
+              className={cn(
+                "h-8 w-8 transition-colors",
+                watchedStatus
+                  ? "text-primary hover:text-primary/80"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+              title={watchedStatus ? `Unwatch ${author}` : `Watch ${author}`}
+            >
+              <Eye className={cn("h-4 w-4", watchedStatus && "fill-current")} />
+            </Button>
+
             {/* Pin Button */}
             <Button
               variant="ghost"
@@ -212,6 +241,8 @@ const Comment = ({
               isPinned={isPinned}
               onPinComment={onPinComment}
               onUnpinComment={onUnpinComment}
+              isWatched={isWatched}
+              onToggleWatch={onToggleWatch}
             />
           ))}
         </div>

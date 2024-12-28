@@ -9,9 +9,11 @@ import ThreadHeader from "./ThreadHeader";
 import PinnedComments from "./PinnedComments";
 import ScrollToTopButton from "./ScrollToTopButton";
 import CommentStats from "./CommentStats";
+import WatchedUsersBanner from "../WatchedUsers/WatchedUsersBanner";
 import { useRedditThread } from "@/hooks/useRedditThread";
 import { usePinnedComments } from "@/hooks/usePinnedComments";
 import { useTitleNotifications } from "@/hooks/useTitleNotifications";
+import { useWatchedUsers } from "@/hooks/useWatchedUsers";
 
 const UPDATE_FREQUENCIES = [
   { value: 10000, label: "10s" },
@@ -66,6 +68,20 @@ const ThreadViewer = ({
   const { pinnedCommentIds, pinComment, unpinComment, clearPins, isPinned } =
     usePinnedComments(threadId);
 
+  // Initialize watched users functionality
+  const {
+    watchedUsers,
+    watchUser,
+    unwatchUser,
+    isWatched,
+    processNewComments,
+    newActivityByUser,
+    clearActivity,
+    clearAllActivity,
+    notificationsEnabled,
+    requestNotifications,
+  } = useWatchedUsers();
+
   // Initialize title notifications
   const { incrementCount } = useTitleNotifications(
     threadData?.title
@@ -83,17 +99,30 @@ const ThreadViewer = ({
     if (!isWatching || !url) return;
 
     const handleFetch = async () => {
-      const newCommentsResult = await fetchComments();
+      const result = await fetchComments();
 
-      // If there are new comments and we got back a result, increment the counter
-      if (newCommentsResult?.newCommentsCount > 0) {
-        incrementCount(newCommentsResult.newCommentsCount);
+      // If there are new comments
+      if (result?.newCommentsCount > 0) {
+        // Increment the title counter first
+        incrementCount(result.newCommentsCount);
+
+        // Then process watched users if needed
+        if (result.comments) {
+          processNewComments(result.comments);
+        }
       }
     };
 
+    // Initial fetch
     handleFetch();
+
+    // Set up interval for subsequent fetches
     const intervalId = setInterval(handleFetch, updateFrequency);
-    return () => clearInterval(intervalId);
+
+    // Cleanup function
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [isWatching, updateFrequency, url, fetchComments, incrementCount]);
 
   useEffect(() => {
@@ -146,6 +175,17 @@ const ThreadViewer = ({
       setTimeout(() => element.classList.remove("highlight-comment"), 2000);
     }
   };
+
+  const handleToggleWatchUser = useCallback(
+    (username) => {
+      if (isWatched(username)) {
+        unwatchUser(username);
+      } else {
+        watchUser(username);
+      }
+    },
+    [isWatched, unwatchUser, watchUser],
+  );
 
   return (
     <div className="grid grid-cols-1 gap-4">
@@ -271,6 +311,21 @@ const ThreadViewer = ({
 
         {threadData && <ThreadHeader threadData={threadData} />}
 
+        {/* Watched Users Banner */}
+        {threadData && watchedUsers.length > 0 && (
+          <WatchedUsersBanner
+            watchedUsers={watchedUsers}
+            comments={comments} // Add this prop
+            newActivityByUser={newActivityByUser}
+            onWatchUser={watchUser}
+            onUnwatchUser={unwatchUser}
+            onClearActivity={clearActivity}
+            notificationsEnabled={notificationsEnabled}
+            onRequestNotifications={requestNotifications}
+            onNavigateToComment={handleNavigateToComment} // Add this prop
+          />
+        )}
+
         {/* Comment Stats */}
         {threadData &&
           commentStats.totalCount > commentStats.displayedCount && (
@@ -299,6 +354,8 @@ const ThreadViewer = ({
           isPinned={isPinned}
           onPinComment={pinComment}
           onUnpinComment={unpinComment}
+          isWatched={isWatched}
+          onToggleWatch={handleToggleWatchUser}
         />
       </main>
 

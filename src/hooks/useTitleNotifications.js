@@ -5,8 +5,6 @@ export function useTitleNotifications(defaultTitle) {
   const [newCount, setNewCount] = useState(0);
   const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
   const [originalTitle] = useState(defaultTitle || document.title);
-
-  // Use a ref to track the latest count across refreshes
   const countRef = useRef(0);
 
   // Handle visibility change
@@ -23,6 +21,9 @@ export function useTitleNotifications(defaultTitle) {
       }
     };
 
+    // Initialize visibility state
+    setIsPageVisible(!document.hidden);
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -35,6 +36,8 @@ export function useTitleNotifications(defaultTitle) {
   useEffect(() => {
     if (!isPageVisible && newCount > 0) {
       document.title = `(${newCount}) ${originalTitle}`;
+    } else if (isPageVisible) {
+      document.title = originalTitle;
     }
   }, [newCount, isPageVisible, originalTitle]);
 
@@ -42,8 +45,9 @@ export function useTitleNotifications(defaultTitle) {
   const incrementCount = useCallback(
     (count = 1) => {
       if (!isPageVisible) {
-        countRef.current += count;
-        setNewCount(countRef.current);
+        const newValue = countRef.current + count;
+        countRef.current = newValue;
+        setNewCount(newValue);
       }
     },
     [isPageVisible],
@@ -55,6 +59,13 @@ export function useTitleNotifications(defaultTitle) {
     countRef.current = 0;
     document.title = originalTitle;
   }, [originalTitle]);
+
+  // Update title when defaultTitle changes
+  useEffect(() => {
+    if (defaultTitle !== originalTitle) {
+      document.title = defaultTitle;
+    }
+  }, [defaultTitle, originalTitle]);
 
   return {
     newCount,

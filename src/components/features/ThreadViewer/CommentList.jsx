@@ -1,3 +1,4 @@
+// src/components/features/ThreadViewer/CommentList.jsx
 import React from "react";
 import Comment from "./Comment";
 
@@ -7,6 +8,8 @@ const CommentList = ({
   isPinned,
   onPinComment,
   onUnpinComment,
+  isWatched,
+  onToggleWatch,
 }) => {
   if (!comments.length) {
     return (
@@ -26,6 +29,8 @@ const CommentList = ({
           isPinned={isPinned?.(comment.id)}
           onPinComment={onPinComment}
           onUnpinComment={onUnpinComment}
+          isWatched={isWatched}
+          onToggleWatch={onToggleWatch}
         />
       ))}
     </div>

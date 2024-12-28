@@ -264,11 +264,14 @@ export function useRedditThread(url) {
       timeoutRef.current = setTimeout(resetNewFlags, 8000);
       setLastFetch(new Date());
 
-      return { newCommentsCount };
+      return {
+        newCommentsCount,
+        comments: newComments, // Return the new comments for processing
+      };
     } catch (err) {
       setError(err.message);
       console.error("Error fetching thread:", err);
-      return { newCommentsCount: 0 };
+      return { newCommentsCount: 0, comments: [] };
     } finally {
       setIsLoading(false);
     }
