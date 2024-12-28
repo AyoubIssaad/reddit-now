@@ -6,8 +6,9 @@ import { AlertCircle, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
 import CommentList from "./CommentList";
 import ThreadHeader from "./ThreadHeader";
-import ScrollToTopButton from "./ScrollToTopButton";
 import PinnedComments from "./PinnedComments";
+import ScrollToTopButton from "./ScrollToTopButton";
+import CommentStats from "./CommentStats";
 import { useRedditThread } from "@/hooks/useRedditThread";
 import { usePinnedComments } from "@/hooks/usePinnedComments";
 import { useTitleNotifications } from "@/hooks/useTitleNotifications";
@@ -50,8 +51,15 @@ const ThreadViewer = ({
     localStorage.getItem("expand-replies") === "true",
   );
 
-  const { comments, error, isLoading, lastFetch, fetchComments, threadData } =
-    useRedditThread(url);
+  const {
+    comments,
+    error,
+    isLoading,
+    lastFetch,
+    fetchComments,
+    threadData,
+    commentStats,
+  } = useRedditThread(url);
 
   // Initialize pinned comments functionality
   const threadId = threadData?.id;
@@ -262,6 +270,15 @@ const ThreadViewer = ({
         )}
 
         {threadData && <ThreadHeader threadData={threadData} />}
+
+        {/* Comment Stats */}
+        {threadData &&
+          commentStats.totalCount > commentStats.displayedCount && (
+            <CommentStats
+              displayedCount={commentStats.displayedCount}
+              totalCount={commentStats.totalCount}
+            />
+          )}
 
         {/* Pinned Comments Section */}
         {threadData && (

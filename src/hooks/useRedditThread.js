@@ -20,7 +20,7 @@ function convertToJsonUrl(url) {
     const baseUrl = `${apiUrl.replace(/\/$/, "")}.json`;
     const params = new URLSearchParams({
       sort: "new",
-      limit: "500",
+      limit: "100",
       raw_json: "1",
     });
     return `${baseUrl}?${params.toString()}`;
@@ -164,6 +164,10 @@ export function useRedditThread(url) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [lastFetch, setLastFetch] = useState(null);
+  const [commentStats, setCommentStats] = useState({
+    displayedCount: 0,
+    totalCount: 0,
+  });
 
   const commentsRef = useRef([]);
   const timeoutRef = useRef();
@@ -204,7 +208,12 @@ export function useRedditThread(url) {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch comments (${response.status})`);
+        if (response.status === 404) {
+          throw new Error(
+            "Thread not found. It might have been deleted or made private.",
+          );
+        }
+        throw new Error("Failed to fetch thread information");
       }
 
       const data = await response.json();
@@ -213,18 +222,18 @@ export function useRedditThread(url) {
       const threadInfo = data[0]?.data?.children?.[0]?.data;
       if (threadInfo) {
         setThreadData(threadInfo);
+        setCommentStats((prev) => ({
+          ...prev,
+          totalCount: threadInfo.num_comments || 0,
+        }));
       }
 
-      // Build map of existing comments
       const existingCommentMap = buildCommentMap(commentsRef.current);
-
-      // Parse new comments
       const newComments = parseComments(
         data[1]?.data?.children || [],
         existingCommentMap,
       );
 
-      // Count genuinely new comments (not seen in previous refreshes)
       let newCommentsCount = 0;
       const countNewComments = (comments) => {
         for (const comment of comments) {
@@ -239,20 +248,22 @@ export function useRedditThread(url) {
       };
       countNewComments(newComments);
 
-      // Clear any existing timeout
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
-      // Merge old and new comments
-      setComments((prevComments) => mergeComments(prevComments, newComments));
+      setComments((prevComments) => {
+        const mergedComments = mergeComments(prevComments, newComments);
+        setCommentStats((prev) => ({
+          ...prev,
+          displayedCount: mergedComments.length,
+        }));
+        return mergedComments;
+      });
 
-      // Set new timeout for clearing flags
       timeoutRef.current = setTimeout(resetNewFlags, 8000);
-
       setLastFetch(new Date());
 
-      // Return the count of new comments
       return { newCommentsCount };
     } catch (err) {
       setError(err.message);
@@ -263,16 +274,18 @@ export function useRedditThread(url) {
     }
   }, [url, resetNewFlags]);
 
-  // Reset processed comments when URL changes
   useEffect(() => {
     processedCommentsRef.current = new Set();
     setComments([]);
     setThreadData(null);
     setError("");
     setLastFetch(null);
+    setCommentStats({
+      displayedCount: 0,
+      totalCount: 0,
+    });
   }, [url]);
 
-  // Cleanup on unmount or URL change
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -288,5 +301,6 @@ export function useRedditThread(url) {
     lastFetch,
     fetchComments,
     threadData,
+    commentStats,
   };
 }
