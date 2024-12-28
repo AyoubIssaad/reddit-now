@@ -1,4 +1,3 @@
-// src/components/features/WatchedUsers/WatchedUsersBanner.jsx
 import React, { useState, useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -25,17 +24,13 @@ const WatchedUsersBanner = ({
 
     const processComment = (comment) => {
       if (watchedUsers.includes(comment.author)) {
-        // Only track if it's a new comment
-        if (comment.isNew) {
-          if (
-            !result[comment.author] ||
-            comment.created > result[comment.author].created
-          ) {
-            result[comment.author] = comment;
-          }
+        if (
+          !result[comment.author] ||
+          comment.created > result[comment.author].created
+        ) {
+          result[comment.author] = comment;
         }
       }
-      // Process replies recursively
       comment.replies?.forEach(processComment);
     };
 
@@ -108,51 +103,58 @@ const WatchedUsersBanner = ({
 
           {/* Watched Users List */}
           <div className="space-y-2">
-            {watchedUsers.map((username) => (
-              <div
-                key={username}
-                className="flex items-center justify-between bg-muted/30 rounded-lg p-2"
-              >
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleUserClick(username)}
-                    className={`font-medium hover:underline ${
-                      latestCommentsByUser[username]
-                        ? "cursor-pointer"
-                        : "cursor-default"
-                    }`}
-                    disabled={!latestCommentsByUser[username]}
-                  >
-                    u/{username}
-                  </button>
-                  {newActivityByUser[username] && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                      {newActivityByUser[username]} new
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {newActivityByUser[username] && (
+            {watchedUsers.map((username) => {
+              const hasActivity = !!newActivityByUser[username];
+              return (
+                <div
+                  key={username}
+                  className="flex items-center justify-between bg-muted/30 rounded-lg p-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleUserClick(username)}
+                      className={`font-medium ${
+                        hasActivity
+                          ? "text-primary hover:text-primary/80 cursor-pointer"
+                          : "text-muted-foreground"
+                      }`}
+                      title={
+                        hasActivity
+                          ? "Click to see latest comment"
+                          : "No new comments"
+                      }
+                    >
+                      u/{username}
+                    </button>
+                    {hasActivity && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                        {newActivityByUser[username]} new
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {hasActivity && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onClearActivity(username)}
+                        className="text-xs"
+                      >
+                        Clear
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
-                      size="sm"
-                      onClick={() => onClearActivity(username)}
-                      className="text-xs"
+                      size="icon"
+                      onClick={() => onUnwatchUser(username)}
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
                     >
-                      Clear
+                      <X className="h-4 w-4" />
                     </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onUnwatchUser(username)}
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
