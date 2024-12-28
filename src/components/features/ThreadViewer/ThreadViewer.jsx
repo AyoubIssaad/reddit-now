@@ -9,6 +9,7 @@ import ThreadHeader from "./ThreadHeader";
 import PinnedComments from "./PinnedComments";
 import { useRedditThread } from "@/hooks/useRedditThread";
 import { usePinnedComments } from "@/hooks/usePinnedComments";
+import { useTitleNotifications } from "@/hooks/useTitleNotifications";
 
 const UPDATE_FREQUENCIES = [
   { value: 10000, label: "10s" },
@@ -53,15 +54,15 @@ const ThreadViewer = ({
 
   // Initialize pinned comments functionality
   const threadId = threadData?.id;
-  const {
-    pinnedCommentIds,
-    pinComment,
-    unpinComment,
-    clearPins,
-    isPinned,
-    canPin,
-    MAX_PINNED_COMMENTS,
-  } = usePinnedComments(threadId);
+  const { pinnedCommentIds, pinComment, unpinComment, clearPins, isPinned } =
+    usePinnedComments(threadId);
+
+  // Initialize title notifications
+  const { incrementCount } = useTitleNotifications(
+    threadData?.title
+      ? `${threadData.title} | Reddit-Now`
+      : "Reddit-Now - Watch Reddit Threads Live",
+  );
 
   useEffect(() => {
     if (initialUrl) {
@@ -71,10 +72,20 @@ const ThreadViewer = ({
 
   useEffect(() => {
     if (!isWatching || !url) return;
-    fetchComments();
-    const intervalId = setInterval(fetchComments, updateFrequency);
+
+    const handleFetch = async () => {
+      const newCommentsResult = await fetchComments();
+
+      // If there are new comments and we got back a result, increment the counter
+      if (newCommentsResult?.newCommentsCount > 0) {
+        incrementCount(newCommentsResult.newCommentsCount);
+      }
+    };
+
+    handleFetch();
+    const intervalId = setInterval(handleFetch, updateFrequency);
     return () => clearInterval(intervalId);
-  }, [isWatching, updateFrequency, url, fetchComments]);
+  }, [isWatching, updateFrequency, url, fetchComments, incrementCount]);
 
   useEffect(() => {
     if (autoStart && url && !isWatching) {
@@ -113,7 +124,7 @@ const ThreadViewer = ({
         window.pageYOffset -
         headerHeight -
         controlsHeight -
-        20; // 20px extra padding
+        20;
 
       // Smooth scroll to the element
       window.scrollTo({
@@ -178,7 +189,7 @@ const ThreadViewer = ({
       )}
 
       {/* Controls */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-2 pb-2 border-b z-20">
+      <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-2 pb-2 border-b z-20 controls">
         <div className="space-y-3">
           {/* URL and Controls Row */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -270,8 +281,6 @@ const ThreadViewer = ({
           isPinned={isPinned}
           onPinComment={pinComment}
           onUnpinComment={unpinComment}
-          canPin={canPin}
-          maxPins={MAX_PINNED_COMMENTS}
         />
       </main>
     </div>

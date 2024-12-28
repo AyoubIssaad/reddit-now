@@ -82,7 +82,6 @@ function parseComments(children, existingCommentMap) {
       const comment = processComment(child.data, existingCommentMap);
       if (!comment) return null;
 
-      // Process replies recursively
       if (child.data.replies?.data?.children) {
         comment.replies = parseComments(
           child.data.replies.data.children,
@@ -98,21 +97,17 @@ function parseComments(children, existingCommentMap) {
 function mergeComments(oldComments, newComments) {
   const mergedMap = new Map();
 
-  // Helper function to merge a comment and its replies
   function mergeComment(comment, isFromNewSet = false) {
     const existing = mergedMap.get(comment.id);
 
     if (existing) {
-      // Keep track of existing replies
       const existingReplies = new Map(
         existing.replies.map((reply) => [reply.id, reply]),
       );
 
-      // Process new replies
       const mergedReplies = comment.replies.map((newReply) => {
         const existingReply = existingReplies.get(newReply.id);
         if (existingReply) {
-          // If reply exists, merge it recursively
           return {
             ...existingReply,
             ...newReply,
@@ -120,14 +115,12 @@ function mergeComments(oldComments, newComments) {
             replies: mergeComment(newReply, isFromNewSet).replies,
           };
         }
-        // If reply is new, mark it as new
         return {
           ...newReply,
           isNew: true,
         };
       });
 
-      // Add existing replies that weren't in the new set
       existing.replies.forEach((reply) => {
         if (!mergedReplies.some((r) => r.id === reply.id)) {
           mergedReplies.push(reply);
@@ -144,10 +137,9 @@ function mergeComments(oldComments, newComments) {
       mergedMap.set(comment.id, merged);
       return merged;
     } else {
-      // Process replies for new comment
-      const processedReplies = comment.replies.map((reply) => {
-        return mergeComment(reply, isFromNewSet);
-      });
+      const processedReplies = comment.replies.map((reply) =>
+        mergeComment(reply, isFromNewSet),
+      );
 
       const newComment = {
         ...comment,
@@ -160,13 +152,9 @@ function mergeComments(oldComments, newComments) {
     }
   }
 
-  // Process all old comments first
   oldComments.forEach((comment) => mergeComment(comment, false));
-
-  // Then process new comments, potentially updating existing ones
   newComments.forEach((comment) => mergeComment(comment, true));
 
-  // Convert map to array and sort
   return Array.from(mergedMap.values()).sort((a, b) => b.created - a.created);
 }
 
@@ -176,8 +164,10 @@ export function useRedditThread(url) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [lastFetch, setLastFetch] = useState(null);
+
   const commentsRef = useRef([]);
   const timeoutRef = useRef();
+  const processedCommentsRef = useRef(new Set());
 
   commentsRef.current = comments;
 
@@ -234,6 +224,21 @@ export function useRedditThread(url) {
         existingCommentMap,
       );
 
+      // Count genuinely new comments (not seen in previous refreshes)
+      let newCommentsCount = 0;
+      const countNewComments = (comments) => {
+        for (const comment of comments) {
+          if (!processedCommentsRef.current.has(comment.id)) {
+            newCommentsCount++;
+            processedCommentsRef.current.add(comment.id);
+          }
+          if (comment.replies) {
+            countNewComments(comment.replies);
+          }
+        }
+      };
+      countNewComments(newComments);
+
       // Clear any existing timeout
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -246,13 +251,26 @@ export function useRedditThread(url) {
       timeoutRef.current = setTimeout(resetNewFlags, 3000);
 
       setLastFetch(new Date());
+
+      // Return the count of new comments
+      return { newCommentsCount };
     } catch (err) {
       setError(err.message);
       console.error("Error fetching thread:", err);
+      return { newCommentsCount: 0 };
     } finally {
       setIsLoading(false);
     }
   }, [url, resetNewFlags]);
+
+  // Reset processed comments when URL changes
+  useEffect(() => {
+    processedCommentsRef.current = new Set();
+    setComments([]);
+    setThreadData(null);
+    setError("");
+    setLastFetch(null);
+  }, [url]);
 
   // Cleanup on unmount or URL change
   useEffect(() => {
@@ -261,14 +279,6 @@ export function useRedditThread(url) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [url]);
-
-  // Reset comments when URL changes
-  useEffect(() => {
-    setComments([]);
-    setThreadData(null);
-    setError("");
-    setLastFetch(null);
   }, [url]);
 
   return {
