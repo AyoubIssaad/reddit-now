@@ -177,8 +177,22 @@ export function useRedditThread(url) {
   const [isLoading, setIsLoading] = useState(false);
   const [lastFetch, setLastFetch] = useState(null);
   const commentsRef = useRef([]);
+  const timeoutRef = useRef();
 
   commentsRef.current = comments;
+
+  const resetNewFlags = useCallback(() => {
+    setComments((current) => {
+      function resetFlags(comments) {
+        return comments.map((comment) => ({
+          ...comment,
+          isNew: false,
+          replies: resetFlags(comment.replies),
+        }));
+      }
+      return resetFlags(current);
+    });
+  }, []);
 
   const fetchComments = useCallback(async () => {
     if (!url) {
@@ -220,8 +234,16 @@ export function useRedditThread(url) {
         existingCommentMap,
       );
 
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
       // Merge old and new comments
       setComments((prevComments) => mergeComments(prevComments, newComments));
+
+      // Set new timeout for clearing flags
+      timeoutRef.current = setTimeout(resetNewFlags, 3000);
 
       setLastFetch(new Date());
     } catch (err) {
@@ -230,6 +252,15 @@ export function useRedditThread(url) {
     } finally {
       setIsLoading(false);
     }
+  }, [url, resetNewFlags]);
+
+  // Cleanup on unmount or URL change
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [url]);
 
   // Reset comments when URL changes
