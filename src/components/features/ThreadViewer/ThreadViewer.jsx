@@ -1,11 +1,12 @@
 // src/components/features/ThreadViewer/ThreadViewer.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { AlertCircle, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
 import CommentList from "./CommentList";
 import ThreadHeader from "./ThreadHeader";
+import ScrollToTopButton from "./ScrollToTopButton";
 import PinnedComments from "./PinnedComments";
 import { useRedditThread } from "@/hooks/useRedditThread";
 import { usePinnedComments } from "@/hooks/usePinnedComments";
@@ -283,6 +284,9 @@ const ThreadViewer = ({
           onUnpinComment={unpinComment}
         />
       </main>
+
+      {/* Scroll to Top Button */}
+      <ScrollToTopButton />
     </div>
   );
 };
